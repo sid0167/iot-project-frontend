@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Health Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h2>IoT Health Monitor</h2>
+    <p>Temperature: <span id="temperature">--</span> °C</p>
+    <p>Blood Pressure: <span id="bloodPressure">--</span></p>
+    <p>Heart Rate: <span id="heartRate">--</span> bpm</p>
+    <button onclick="logout()">Logout</button>
+  </div>
+  <script src="script.js"></script>
+  <script>
+    fetchHealthData();
+  </script>
+</body>
+</html>
