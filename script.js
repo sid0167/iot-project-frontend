@@ -35,5 +35,5 @@ async function fetchHealthData() {
 
 function logout() {
   localStorage.removeItem("token");
-  window.location.href = "login.html";
+  window.location.href = "login2.html";
 }
