@@ -20,7 +20,7 @@ async function signup() {
       msg.style.color = 'green';
 
       setTimeout(() => {
-        window.location.href = '/iot-project-frontend/login2.html'; // Redirect to signin page
+        window.location.href = '/login2.html'; // Redirect to signin page
       }, 1500);
     } else {
       msg.textContent = data.message || 'Signup failed.';
