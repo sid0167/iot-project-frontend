@@ -87,7 +87,13 @@
       <p id="bpValue">-- mmHg</p>
     </div>
   </div>
-
+  <div class="card" style="margin: 2rem;">
+    <h3>Prediction (Last 7 Days)</h3>
+    <p><strong>Avg. Temperature:</strong> <span id="avgTemp">-- °C</span></p>
+    <p><strong>Avg. Heart Rate:</strong> <span id="avgHeart">-- bpm</span></p>
+    <p><strong>Status:</strong> <span id="prediction">--</span></p>
+  </div>
+  
   <div class="charts">
     <canvas id="tempChart"></canvas>
     <canvas id="heartChart"></canvas>
@@ -104,6 +110,27 @@
     const tempCtx = document.getElementById('tempChart').getContext('2d');
     const heartCtx = document.getElementById('heartChart').getContext('2d');
     const bpCtx = document.getElementById('bpChart').getContext('2d');
+    async function fetchPrediction() {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  try {
+    const res = await fetch('https://iot-project-25ym.onrender.com/api/health/predict', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+
+    if (data.averageTemperature && data.averageHeartRate && data.prediction) {
+      document.getElementById("avgTemp").innerText = `${data.averageTemperature} °C`;
+      document.getElementById("avgHeart").innerText = `${data.averageHeartRate} bpm`;
+      document.getElementById("prediction").innerText = data.prediction;
+    } else {
+      document.getElementById("prediction").innerText = data.message || "Not enough data";
+    }
+  } catch (e) {
+    console.error("Prediction error:", e);
+  }
+}
 
     const tempChart = new Chart(tempCtx, {
       type: 'line',
@@ -190,6 +217,7 @@
     }
 
     setInterval(fetchData, 5000); // Poll every 5 seconds
+    fetchPrediction(); // Fetch prediction only once when the page loads
 
     function logout() {
       localStorage.removeItem("token");
