@@ -2,124 +2,216 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Life Pulse Timeline</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css?family=Ubuntu&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #f5f7fa, #c3cfe2);
+      font-family: 'Ubuntu', sans-serif;
+      background: #f5f6fa;
       margin: 0;
-      padding: 2rem;
-      overflow-x: hidden;
+      padding: 0;
     }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 2rem;
+    .navbar {
+      background: #2d3436;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .timeline {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1.5rem;
-    }
-
-    .pulse-entry {
-      background: white;
-      border-left: 6px solid #6c5ce7;
-      padding: 1rem 1.5rem;
-      width: 80%;
-      max-width: 600px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      border-radius: 8px;
+      max-width: 800px;
+      margin: 2rem auto;
       position: relative;
-      animation: slideIn 0.6s ease forwards;
+      padding-left: 2rem;
+      border-left: 3px solid #6c5ce7;
+    }
+
+    .entry {
+      margin-bottom: 2rem;
+      position: relative;
       opacity: 0;
-      transform: translateX(-50px);
+      transform: translateY(30px);
+      animation: slideUp 0.8s forwards;
     }
 
-    .pulse-entry.show {
-      opacity: 1;
-      transform: translateX(0);
+    .entry:nth-child(even) {
+      animation-delay: 0.2s;
     }
 
-    .pulse-entry::before {
-      content: "";
-      width: 12px;
-      height: 12px;
+    .entry::before {
+      content: '';
+      position: absolute;
+      left: -11px;
+      top: 0;
+      width: 16px;
+      height: 16px;
       background: #6c5ce7;
       border-radius: 50%;
-      position: absolute;
-      left: -9px;
-      top: 1.2rem;
     }
 
-    .pulse-entry h3 {
-      margin: 0;
-      font-size: 1.2rem;
+    .entry-content {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
-    .pulse-entry p {
-      margin: 0.5rem 0 0;
+    .summary {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: #ffeaa7;
+      padding: 1rem;
+      border-radius: 8px;
+      font-weight: bold;
     }
 
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateX(-50px);
-      }
+    .buttons {
+      text-align: center;
+      margin: 1rem auto;
+    }
+
+    .buttons button {
+      padding: 10px 20px;
+      margin: 0.5rem;
+      background: #6c5ce7;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    @keyframes slideUp {
       to {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateY(0);
       }
     }
   </style>
 </head>
 <body>
-  <h1>Life Pulse Timeline</h1>
-  <div class="timeline" id="timeline"></div>
+  <div class="navbar">
+    <h2>Life Pulse Timeline</h2>
+    <button onclick="location.href='/dashboard.html'" style="background:#d63031; padding: 8px 16px; color: white; border: none; border-radius: 5px;">Back</button>
+  </div>
+
+  <div class="buttons">
+    <select id="monthFilter" onchange="filterByMonth()">
+      <option value="all">All Months</option>
+    </select>
+    <button onclick="exportToCSV()">Export CSV</button>
+    <button onclick="exportToPDF()">Export PDF</button>
+  </div>
+
+  <div id="timeline" class="timeline"></div>
+  <div class="summary" id="summaryBox"></div>
 
   <script>
-    async function fetchHealthData() {
-      const token = localStorage.getItem("token");
-      if (!token) return;
+    let fullData = [];
 
-      try {
-        const res = await fetch('https://iot-project-25ym.onrender.com/api/health/all', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        const data = await res.json();
-        showTimeline(data.reverse()); // Show from oldest to newest
-      } catch (err) {
-        console.error("Error fetching timeline:", err);
-      }
+    async function fetchTimelineData() {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/health/timeline', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      fullData = data;
+      populateMonthFilter(data);
+      renderTimeline(data);
+      generateSummary(data);
     }
 
-    function showTimeline(data) {
-      const timeline = document.getElementById('timeline');
-
-      data.forEach((entry, index) => {
-        const date = new Date(entry.timestamp).toLocaleString();
-        const card = document.createElement('div');
-        card.className = 'pulse-entry';
-        card.innerHTML = `
-          <h3>${date}</h3>
-          <p><strong>Temperature:</strong> ${entry.temperature} °C</p>
-          <p><strong>Heart Rate:</strong> ${entry.heartRate} bpm</p>
-          <p><strong>Blood Pressure:</strong> ${entry.bloodPressure} mmHg</p>
-        `;
-
-        setTimeout(() => {
-          card.classList.add('show');
-        }, index * 200); // stagger animation
-
-        timeline.appendChild(card);
+    function populateMonthFilter(data) {
+      const select = document.getElementById('monthFilter');
+      const months = new Set(data.map(d => new Date(d.timestamp).toLocaleString('default', { month: 'long', year: 'numeric' })));
+      months.forEach(month => {
+        const opt = document.createElement('option');
+        opt.value = month;
+        opt.textContent = month;
+        select.appendChild(opt);
       });
     }
 
-    fetchHealthData();
+    function renderTimeline(data) {
+      const container = document.getElementById('timeline');
+      container.innerHTML = '';
+      data.forEach(entry => {
+        const div = document.createElement('div');
+        div.className = 'entry';
+        div.innerHTML = `
+          <div class="entry-content">
+            <strong>${new Date(entry.timestamp).toLocaleString()}</strong><br>
+            Temperature: ${entry.temperature} °C<br>
+            Heart Rate: ${entry.heartRate} bpm<br>
+            Blood Pressure: ${entry.bloodPressure} mmHg
+          </div>`;
+        container.appendChild(div);
+      });
+    }
+
+    function filterByMonth() {
+      const selected = document.getElementById('monthFilter').value;
+      if (selected === 'all') {
+        renderTimeline(fullData);
+        generateSummary(fullData);
+        return;
+      }
+      const filtered = fullData.filter(d =>
+        new Date(d.timestamp).toLocaleString('default', { month: 'long', year: 'numeric' }) === selected
+      );
+      renderTimeline(filtered);
+      generateSummary(filtered);
+    }
+
+    function exportToCSV() {
+      const csv = Papa.unparse(fullData.map(d => ({
+        timestamp: d.timestamp,
+        temperature: d.temperature,
+        heartRate: d.heartRate,
+        bloodPressure: d.bloodPressure
+      })));
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'health_data.csv';
+      link.click();
+    }
+
+    function exportToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(12);
+      fullData.forEach((d, i) => {
+        doc.text(`Date: ${new Date(d.timestamp).toLocaleString()}`, 10, 10 + i * 10);
+        doc.text(`Temp: ${d.temperature}°C | HR: ${d.heartRate} bpm | BP: ${d.bloodPressure}`, 10, 15 + i * 10);
+        if (i > 25) doc.addPage(); // Add page break
+      });
+      doc.save('health_data.pdf');
+    }
+
+    function generateSummary(data) {
+      if (data.length === 0) return document.getElementById('summaryBox').innerText = "No data available";
+
+      const avg = arr => (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2);
+      const tempAvg = avg(data.map(d => d.temperature));
+      const hrAvg = avg(data.map(d => d.heartRate));
+      const bpAvg = avg(data.map(d => d.bloodPressure));
+      let status = 'Normal';
+      if (tempAvg > 37.5 || hrAvg > 90 || bpAvg > 130) status = 'High';
+      else if (tempAvg < 36 || hrAvg < 60 || bpAvg < 100) status = 'Low';
+
+      document.getElementById('summaryBox').innerText =
+        `Summary: Avg Temp: ${tempAvg} °C, HR: ${hrAvg} bpm, BP: ${bpAvg} mmHg → Health status: ${status}`;
+    }
+
+    fetchTimelineData();
   </script>
 </body>
 </html>
