@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Health Comparison - 3 Months</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+    h2 { text-align: center; }
+    canvas { margin: 20px auto; display: block; max-width: 90%; }
+  </style>
+</head>
+<body>
+  <h2>3-Month Health Comparison</h2>
+  <canvas id="tempChart"></canvas>
+  <canvas id="heartChart"></canvas>
+  <canvas id="bpChart"></canvas>
+
+  <script>
+    async function loadComparisonData() {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const res = await fetch("https://iot-project-25ym.onrender.com/api/health/last-three-months", {
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+        const data = await res.json();
+
+        const labels = data.map(entry => new Date(entry.timestamp).toLocaleDateString());
+        const temp = data.map(entry => entry.temperature);
+        const heart = data.map(entry => entry.heartRate);
+        const bp = data.map(entry => entry.bloodPressure);
+
+        new Chart(document.getElementById("tempChart"), {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Temperature (°C)',
+              data: temp,
+              borderColor: '#e17055',
+              fill: false
+            }]
+          }
+        });
+
+        new Chart(document.getElementById("heartChart"), {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Heart Rate (bpm)',
+              data: heart,
+              borderColor: '#0984e3',
+              fill: false
+            }]
+          }
+        });
+
+        new Chart(document.getElementById("bpChart"), {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Blood Pressure (mmHg)',
+              data: bp,
+              borderColor: '#6c5ce7',
+              fill: false
+            }]
+          }
+        });
+
+      } catch (err) {
+        console.error("❌ Error loading comparison data:", err);
+      }
+    }
+
+    loadComparisonData(); // Load once
+  </script>
+</body>
+</html>
+
