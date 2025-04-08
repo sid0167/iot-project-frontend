@@ -1,20 +1,200 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Health Dashboard</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>IoT Health Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css?family=Ubuntu&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Ubuntu', sans-serif;
+      background: #f0f2f5;
+      color: #333;
+    }
+
+    .navbar {
+      background: #2d3436;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin: 2rem;
+    }
+
+    .card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      flex: 1;
+      margin: 0 1rem;
+      text-align: center;
+    }
+
+    .charts {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 2rem;
+    }
+
+    canvas {
+      max-width: 90%;
+      margin: 1rem 0;
+    }
+
+    #resetBtn {
+      margin: 1rem;
+      padding: 0.8rem 1.5rem;
+      background: #d63031;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #resetBtn:hover {
+      background: #c0392b;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h2>IoT Health Monitor</h2>
-    <p>Temperature: <span id="temperature">--</span> °C</p>
-    <p>Blood Pressure: <span id="bloodPressure">--</span></p>
-    <p>Heart Rate: <span id="heartRate">--</span> bpm</p>
-    <button onclick="logout()">Logout</button>
+  <div class="navbar">
+    <h2>Health Dashboard</h2>
+    <button onclick="logout()" style="background:#d63031; color:white; padding:8px 16px; border:none; border-radius:4px;">Logout</button>
   </div>
-  <script src="script.js"></script>
+
+  <div class="stats">
+    <div class="card">
+      <h3>Temperature</h3>
+      <p id="tempValue">-- °C</p>
+    </div>
+    <div class="card">
+      <h3>Heart Rate</h3>
+      <p id="heartValue">-- bpm</p>
+    </div>
+    <div class="card">
+      <h3>Blood Pressure</h3>
+      <p id="bpValue">-- mmHg</p>
+    </div>
+  </div>
+
+  <div class="charts">
+    <canvas id="tempChart"></canvas>
+    <canvas id="heartChart"></canvas>
+    <canvas id="bpChart"></canvas>
+    <button id="resetBtn" onclick="resetCharts()">Reset Charts</button>
+  </div>
+
   <script>
-    fetchHealthData();
+    const tempData = [];
+    const heartData = [];
+    const bpData = [];
+    const labels = [];
+
+    const tempCtx = document.getElementById('tempChart').getContext('2d');
+    const heartCtx = document.getElementById('heartChart').getContext('2d');
+    const bpCtx = document.getElementById('bpChart').getContext('2d');
+
+    const tempChart = new Chart(tempCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Temperature (°C)',
+          data: tempData,
+          borderColor: '#e17055',
+          fill: false
+        }]
+      }
+    });
+
+    const heartChart = new Chart(heartCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Heart Rate (bpm)',
+          data: heartData,
+          borderColor: '#0984e3',
+          fill: false
+        }]
+      }
+    });
+
+    const bpChart = new Chart(bpCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Blood Pressure (mmHg)',
+          data: bpData,
+          borderColor: '#6c5ce7',
+          fill: false
+        }]
+      }
+    });
+
+    function updateCharts(temp, heart, bp) {
+      const time = new Date().toLocaleTimeString();
+      labels.push(time);
+
+      tempData.push(temp);
+      heartData.push(heart);
+      bpData.push(bp);
+
+      document.getElementById("tempValue").innerText = `${temp} °C`;
+      document.getElementById("heartValue").innerText = `${heart} bpm`;
+      document.getElementById("bpValue").innerText = `${bp} mmHg`;
+
+      tempChart.update();
+      heartChart.update();
+      bpChart.update();
+    }
+
+    function resetCharts() {
+      labels.length = 0;
+      tempData.length = 0;
+      heartData.length = 0;
+      bpData.length = 0;
+
+      tempChart.update();
+      heartChart.update();
+      bpChart.update();
+    }
+
+    async function fetchData() {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const res = await fetch('https://iot-project-25ym.onrender.com/api/health/latest', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.temperature && data.heartRate && data.bloodPressure) {
+          updateCharts(data.temperature, data.heartRate, data.bloodPressure);
+        }
+      } catch (e) {
+        console.error('Error fetching data:', e);
+      }
+    }
+
+    setInterval(fetchData, 5000); // Poll every 5 seconds
+
+    function logout() {
+      localStorage.removeItem("token");
+      window.location.href = "/iot-project-frontend/login.html"; // Redirect to login page
+    }
   </script>
 </body>
 </html>
