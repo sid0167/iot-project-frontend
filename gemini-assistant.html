@@ -119,18 +119,20 @@
   </div>
 
   <script>
-    const BASE_URL = 'https://iot-project-25ym.onrender.com'; // ✅ Your Render backend
-  
-    // 🔐 Get token from localStorage (assuming you store it there after login)
+    const BASE_URL = 'https://iot-project-25ym.onrender.com';
     const token = localStorage.getItem('token');
   
     async function getAdvice() {
       try {
         const res = await fetch(`${BASE_URL}/api/health/gemini`, {
+          method: 'POST',
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
-          }
+          },
+          body: JSON.stringify({ mode: 'advice' })
         });
+  
         const data = await res.json();
         document.getElementById('adviceResult').innerText = data.message || 'No advice received.';
       } catch (err) {
@@ -154,7 +156,10 @@
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ prompt: userMessage })
+          body: JSON.stringify({
+            mode: 'chat',
+            userMessage
+          })
         });
   
         const data = await res.json();
@@ -165,6 +170,7 @@
       }
     }
   </script>
+  
   
 </body>
 </html>
