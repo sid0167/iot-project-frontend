@@ -70,11 +70,11 @@
         headers: { Authorization: `Bearer ${token}` }
       }).then(res => res.json());
 
-      // Step 2: Form Gemini prompt
-      const prompt = `Give health and lifestyle advice based on these vitals:
-      - Average Temperature: ${summary.temperatureAvg}°C
-      - Average Heart Rate: ${summary.heartRateAvg} bpm
-      - Average Blood Pressure: ${summary.bloodPressureAvg} mmHg`;
+      const prompt = `Provide basic health and lifestyle suggestions based on the following vitals:
+- Temperature: ${temperature}°C
+- Heart Rate: ${heartRate} bpm
+- Blood Pressure: ${bloodPressure}`;
+
 
       // Step 3: Call Gemini
       const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
