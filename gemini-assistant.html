@@ -2,93 +2,157 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Medical AI Assistant</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Health Companion</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      padding: 2rem;
-      color: #2d3436;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #f7f9fc;
+      color: #333;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
     }
 
     .card {
-      max-width: 600px;
-      margin: auto;
       background: white;
-      border-radius: 10px;
-      padding: 2rem;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      margin-bottom: 30px;
     }
 
-    h2 {
-      text-align: center;
-      color: #6c5ce7;
-    }
-
-    #response {
-      white-space: pre-line;
-      margin-top: 1rem;
-      padding: 1rem;
-      background: #dfe6e9;
-      border-radius: 5px;
+    .card h2 {
+      margin-top: 0;
+      color: #34495e;
     }
 
     button {
-      background: #6c5ce7;
-      border: none;
-      padding: 10px 20px;
+      background-color: #3498db;
       color: white;
-      border-radius: 5px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
-      display: block;
-      margin: 1rem auto 0 auto;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    .result {
+      margin-top: 15px;
+      white-space: pre-wrap;
+      background-color: #ecf0f1;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .chat-box {
+      background-color: #ecf0f1;
+      padding: 15px;
+      height: 250px;
+      overflow-y: auto;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .chat-input {
+      display: flex;
+      gap: 10px;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .message {
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+    }
+
+    .message.user {
+      background-color: #d1ecf1;
+      text-align: right;
+    }
+
+    .message.ai {
+      background-color: #d4edda;
+      text-align: left;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h2>🧠 Medical AI Assistant</h2>
-    <p>This assistant gives health suggestions based on your recent data.</p>
-    <button onclick="askGemini()">Get Advice</button>
-    <div id="response"></div>
+  <div class="container">
+    <h1>🤖 AI Health Companion</h1>
+
+    <div class="card">
+      <h2>📋 Get Personalized Health Advice</h2>
+      <button onclick="getAdvice()">Get Advice</button>
+      <div id="adviceResult" class="result"></div>
+    </div>
+
+    <div class="card">
+      <h2>💬 Chat with Gemini</h2>
+      <div class="chat-box" id="chatBox"></div>
+      <div class="chat-input">
+        <input type="text" id="chatInput" placeholder="Ask me anything..." />
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
   </div>
 
   <script>
-    const GEMINI_API_KEY = 'AIzaSyC_kawz5w3Nk6MwUoL8u4MMMsK8pKiDzqE'; // 🔐 Replace with your actual API key
+    const BASE_URL = 'https://iot-project-25ym.onrender.com'; // 🔁 Replace this with your real backend Render URL
 
-    async function askGemini() {
-      const token = localStorage.getItem('token');
-
-      if (!token) {
-        alert('User not logged in!');
-        return;
+    async function getAdvice() {
+      try {
+        const res = await fetch(`${BASE_URL}/api/health/gemini`);
+        const data = await res.json();
+        document.getElementById('adviceResult').innerText = data.message || 'No advice received.';
+      } catch (err) {
+        document.getElementById('adviceResult').innerText = 'Error getting advice.';
       }
+    }
 
-      // Step 1: Get user’s health summary from backend
-      const summary = await fetch('https://iot-project-25ym.onrender.com/api/health/summary-for-ai', {
-        headers: { Authorization: `Bearer ${token}` }
-      }).then(res => res.json());
+    async function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const chatBox = document.getElementById('chatBox');
+      const userMessage = input.value.trim();
+      if (!userMessage) return;
 
-      const prompt = `Provide basic health and lifestyle suggestions based on the following vitals:
-- Temperature: ${temperature}°C
-- Heart Rate: ${heartRate} bpm
-- Blood Pressure: ${bloodPressure}`;
+      chatBox.innerHTML += `<div class="message user">👤 ${userMessage}</div>`;
+      input.value = '';
 
+      try {
+        const res = await fetch(`${BASE_URL}/api/health/gemini`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: userMessage })
+        });
 
-      // Step 3: Call Gemini
-      const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      });
-
-      const result = await geminiRes.json();
-
-      const reply = result?.candidates?.[0]?.content?.parts?.[0]?.text || "No response from Gemini.";
-      document.getElementById("response").innerText = reply;
+        const data = await res.json();
+        chatBox.innerHTML += `<div class="message ai">🤖 ${data.message || 'No response from AI.'}</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+      } catch (err) {
+        chatBox.innerHTML += `<div class="message ai">❌ Error getting response.</div>`;
+      }
     }
   </script>
 </body>
