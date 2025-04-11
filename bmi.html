@@ -64,42 +64,48 @@
   </div>
   <button onclick="submitBMI()">Submit & Calculate BMI</button>
   <div id="result"></div>
-
-  <script>
-    const BASE_URL = 'https://iot-project-25ym.onrender.com'; // ✅ Replace if needed
-    const token = localStorage.getItem('token');
-
-    async function submitBMI() {
-      const height = parseFloat(document.getElementById('height').value);
-      const weight = parseFloat(document.getElementById('weight').value);
-      const resultDiv = document.getElementById('result');
-
-      if (!height || !weight) {
-        resultDiv.textContent = 'Please enter both height and weight.';
-        return;
-      }
-
-      try {
-        const res = await fetch(`${BASE_URL}/api/health/UserVitals`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ height, weight })
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-          resultDiv.textContent = `✅ BMI Recorded: ${data.bmi}`;
-        } else {
-          resultDiv.textContent = `❌ ${data.message}`;
-        }
-      } catch (err) {
-        console.error(err);
-        resultDiv.textContent = '❌ Something went wrong.';
-      }
+<script>
+  async function submitBMI() {
+    const height = parseFloat(document.getElementById('height').value);
+    const weight = parseFloat(document.getElementById('weight').value);
+    const resultDiv = document.getElementById('result');
+  
+    if (!height || !weight) {
+      resultDiv.textContent = 'Please enter both height and weight.';
+      return;
     }
-  </script>
+  
+    try {
+      const res = await fetch(`${BASE_URL}/api/health/UserVitals`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ height, weight })
+      });
+  
+      const data = await res.json();
+  
+      if (res.ok) {
+        const bmi = parseFloat(data.bmi);
+        const category = getBMICategory(bmi);
+        resultDiv.textContent = `✅ BMI Recorded: ${bmi} (${category})`;
+      } else {
+        resultDiv.textContent = `❌ ${data.message}`;
+      }
+    } catch (err) {
+      console.error(err);
+      resultDiv.textContent = '❌ Something went wrong.';
+    }
+  }
+  
+  function getBMICategory(bmi) {
+    if (bmi < 18.5) return 'Underweight';
+    if (bmi < 24.9) return 'Normal weight';
+    if (bmi < 29.9) return 'Overweight';
+    return 'Obese';
+  }
+</script>
 </body>
 </html>
