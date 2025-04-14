@@ -81,8 +81,8 @@
       <button onclick="location.href='/gemini-assistant.html'" style="background:#6c5ce7; color:white; padding:8px 16px; border:none; border-radius:4px; margin-left: 10px;">
         Ai assistant
       </button>
-      <button onclick="location.href='https://iot-project-25ym.onrender.com/bmi'" style="background:#6c5ce7; color:white; padding:8px 16px; border:none; border-radius:4px; margin-left: 10px;">
-       Bmi calculator
+      <button onclick="openBMI()" style="background:#6c5ce7; color:white; padding:8px 16px; border:none; border-radius:4px; margin-left: 10px;">
+        BMI Calculator
       </button>
   </div>
 
@@ -235,7 +235,20 @@
     function logout() {
       localStorage.removeItem("token");
       window.location.href = "/login2.html"; // Redirect to login page
+
     }
+
+    
+  const token = localStorage.getItem('token');
+  function openBMI() {
+    if (token) {
+      const url = `https://iot-project-25ym.onrender.com/bmi?token=${token}`;
+      window.location.href = url;
+    } else {
+      alert("You're not logged in!");
+    }
+  }
+
   </script>
 </body>
 </html>
