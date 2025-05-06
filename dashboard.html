@@ -86,44 +86,135 @@
       </button>
   </div>
 
-  <div class="stats">
-    <div class="card">
-      <h3>Temperature</h3>
-      <p id="tempValue">-- °C</p>
-    </div>
-    <div class="card">
-      <h3>Heart Rate</h3>
-      <p id="heartValue">-- bpm</p>
-    </div>
-    <div class="card">
-      <h3>Blood Pressure</h3>
-      <p id="bpValue">-- mmHg</p>
-    </div>
+  <!-- Inside the .stats div -->
+<div class="stats">
+  <div class="card">
+    <h3>Temperature</h3>
+    <p id="tempValue">-- °C</p>
   </div>
-  <div class="card" style="margin: 2rem;">
-    <h3>Prediction (Last 7 Days)</h3>
-    <p><strong>Avg. Temperature:</strong> <span id="avgTemp">-- °C</span></p>
-    <p><strong>Avg. Heart Rate:</strong> <span id="avgHeart">-- bpm</span></p>
-    <p><strong>Status:</strong> <span id="prediction">--</span></p>
+  <div class="card">
+    <h3>Humidity</h3>
+    <p id="humidityValue">-- %</p>
   </div>
+  <div class="card">
+    <h3>Air Quality</h3>
+    <p id="airValue">--</p>
+  </div>
+</div>
+
+<!-- Update Prediction Card -->
+<div class="card" style="margin: 2rem;">
+  <h3>Prediction (Last 7 Days)</h3>
+  <p><strong>Avg. Temperature:</strong> <span id="avgTemp">-- °C</span></p>
+  <p><strong>Avg. Humidity:</strong> <span id="avgHumidity">-- %</span></p>
+  <p><strong>Status:</strong> <span id="prediction">--</span></p>
+</div>
+
+<!-- Chart Containers -->
+<div class="charts">
+  <canvas id="tempChart"></canvas>
+  <canvas id="humidityChart"></canvas>
+  <canvas id="airChart"></canvas>
+  <button id="resetBtn" onclick="resetCharts()">Reset Charts</button>
+</div>
+
   
-  <div class="charts">
-    <canvas id="tempChart"></canvas>
-    <canvas id="heartChart"></canvas>
-    <canvas id="bpChart"></canvas>
-    <button id="resetBtn" onclick="resetCharts()">Reset Charts</button>
-  </div>
 
   <script>
-    const tempData = [];
-    const heartData = [];
-    const bpData = [];
-    const labels = [];
+   const tempData = [];
+const humidityData = [];
+const airData = [];
+const labels = [];
 
-    const tempCtx = document.getElementById('tempChart').getContext('2d');
-    const heartCtx = document.getElementById('heartChart').getContext('2d');
-    const bpCtx = document.getElementById('bpChart').getContext('2d');
-    async function fetchPrediction() {
+const tempCtx = document.getElementById('tempChart').getContext('2d');
+const humidityCtx = document.getElementById('humidityChart').getContext('2d');
+const airCtx = document.getElementById('airChart').getContext('2d');
+
+const tempChart = new Chart(tempCtx, {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [{
+      label: 'Temperature (°C)',
+      data: tempData,
+      borderColor: '#e17055',
+      fill: false
+    }]
+  }
+});
+
+const humidityChart = new Chart(humidityCtx, {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [{
+      label: 'Humidity (%)',
+      data: humidityData,
+      borderColor: '#00cec9',
+      fill: false
+    }]
+  }
+});
+
+const airChart = new Chart(airCtx, {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [{
+      label: 'Air Quality',
+      data: airData,
+      borderColor: '#6c5ce7',
+      fill: false
+    }]
+  }
+});
+
+function updateCharts(temp, humidity, air) {
+  const time = new Date().toLocaleTimeString();
+  labels.push(time);
+
+  tempData.push(temp);
+  humidityData.push(humidity);
+  airData.push(air);
+
+  document.getElementById("tempValue").innerText = `${temp} °C`;
+  document.getElementById("humidityValue").innerText = `${humidity} %`;
+  document.getElementById("airValue").innerText = air;
+
+  tempChart.update();
+  humidityChart.update();
+  airChart.update();
+}
+
+function resetCharts() {
+  labels.length = 0;
+  tempData.length = 0;
+  humidityData.length = 0;
+  airData.length = 0;
+
+  tempChart.update();
+  humidityChart.update();
+  airChart.update();
+}
+
+async function fetchData() {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  try {
+    const res = await fetch('https://iot-project-25ym.onrender.com/api/health/latest', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.temperature && data.humidity && data.AIR !== undefined) {
+      updateCharts(data.temperature, data.humidity, data.AIR);
+    }
+  } catch (e) {
+    console.error('Error fetching data:', e);
+  }
+}
+
+async function fetchPrediction() {
   const token = localStorage.getItem("token");
   if (!token) return;
 
@@ -133,9 +224,9 @@
     });
     const data = await res.json();
 
-    if (data.averageTemperature && data.averageHeartRate && data.prediction) {
+    if (data.averageTemperature && data.averageHumidity && data.prediction) {
       document.getElementById("avgTemp").innerText = `${data.averageTemperature} °C`;
-      document.getElementById("avgHeart").innerText = `${data.averageHeartRate} bpm`;
+      document.getElementById("avgHumidity").innerText = `${data.averageHumidity} %`;
       document.getElementById("prediction").innerText = data.prediction;
     } else {
       document.getElementById("prediction").innerText = data.message || "Not enough data";
@@ -144,111 +235,6 @@
     console.error("Prediction error:", e);
   }
 }
-
-    const tempChart = new Chart(tempCtx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Temperature (°C)',
-          data: tempData,
-          borderColor: '#e17055',
-          fill: false
-        }]
-      }
-    });
-
-    const heartChart = new Chart(heartCtx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Heart Rate (bpm)',
-          data: heartData,
-          borderColor: '#0984e3',
-          fill: false
-        }]
-      }
-    });
-
-    const bpChart = new Chart(bpCtx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Blood Pressure (mmHg)',
-          data: bpData,
-          borderColor: '#6c5ce7',
-          fill: false
-        }]
-      }
-    });
-
-    function updateCharts(temp, heart, bp) {
-      const time = new Date().toLocaleTimeString();
-      labels.push(time);
-
-      tempData.push(temp);
-      heartData.push(heart);
-      bpData.push(bp);
-
-      document.getElementById("tempValue").innerText = `${temp} °C`;
-      document.getElementById("heartValue").innerText = `${heart} bpm`;
-      document.getElementById("bpValue").innerText = `${bp} mmHg`;
-
-      tempChart.update();
-      heartChart.update();
-      bpChart.update();
-    }
-
-    function resetCharts() {
-      labels.length = 0;
-      tempData.length = 0;
-      heartData.length = 0;
-      bpData.length = 0;
-
-      tempChart.update();
-      heartChart.update();
-      bpChart.update();
-    }
-
-    async function fetchData() {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      try {
-        const res = await fetch('https://iot-project-25ym.onrender.com/api/health/latest', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.temperature && data.heartRate && data.bloodPressure) {
-          updateCharts(data.temperature, data.heartRate, data.bloodPressure);
-        }
-      } catch (e) {
-        console.error('Error fetching data:', e);
-      }
-    }
-
-    setInterval(fetchData, 5000); // Poll every 5 seconds
-    fetchPrediction(); // Fetch prediction only once when the page loads
-
-    function logout() {
-      localStorage.removeItem("token");
-      window.location.href = "/login2.html"; // Redirect to login page
-
-    }
-
-    
-  const token = localStorage.getItem('token');
-  function openBMI() {
-    if (token) {
-      const url = `https://iot-project-25ym.onrender.com/bmi?token=${token}`;
-      window.location.href = url;
-    } else {
-      alert("You're not logged in!");
-    }
-  }
-
-  </script>
+</script>
 </body>
 </html>

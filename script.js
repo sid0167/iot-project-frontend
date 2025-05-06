@@ -28,11 +28,12 @@ async function fetchHealthData() {
   });
 
   const data = await res.json();
-  document.getElementById("temperature").textContent = data.temperature ?? "--";
-  document.getElementById("bloodPressure").textContent = data.bloodPressure ?? "--";
-  document.getElementById("heartRate").textContent = data.heartRate ?? "--";
-}
 
+  // Update frontend fields based on the latest schema
+  document.getElementById("temperature").textContent = data.temperature ?? "--";
+  document.getElementById("humidity").textContent = data.humidity ?? "--";
+  document.getElementById("air").textContent = data.AIR ?? "--";
+}
 function logout() {
   localStorage.removeItem("token");
   window.location.href = "login2.html";
