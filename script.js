@@ -32,7 +32,7 @@ async function fetchHealthData() {
   // Update frontend fields based on the latest schema
   document.getElementById("temperature").textContent = data.temperature ?? "--";
   document.getElementById("humidity").textContent = data.humidity ?? "--";
-  document.getElementById("air").textContent = data.AIR ?? "--";
+  document.getElementById("air").textContent = data.air ?? "--";
 }
 function logout() {
   localStorage.removeItem("token");
