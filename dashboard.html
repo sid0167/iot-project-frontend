@@ -96,7 +96,7 @@
       <p id="heartValue">-- bpm</p>
     </div>
     <div class="card">
-      <h3>Blood Pressure</h3>
+      <h3>spo2</h3>
       <p id="bpValue">-- mmHg</p>
     </div>
   </div>
@@ -110,14 +110,14 @@
   <div class="charts">
     <canvas id="tempChart"></canvas>
     <canvas id="heartChart"></canvas>
-    <canvas id="bpChart"></canvas>
+    <canvas id="spo2Chart"></canvas>
     <button id="resetBtn" onclick="resetCharts()">Reset Charts</button>
   </div>
 
   <script>
     const tempData = [];
     const heartData = [];
-    const bpData = [];
+    const spo2Data = [];
     const labels = [];
 
     const tempCtx = document.getElementById('tempChart').getContext('2d');
@@ -176,7 +176,7 @@
       data: {
         labels: labels,
         datasets: [{
-          label: 'Blood Pressure (mmHg)',
+          label: 'spo2 (mmHg)',
           data: bpData,
           borderColor: '#6c5ce7',
           fill: false
@@ -194,7 +194,7 @@
 
       document.getElementById("tempValue").innerText = `${temp} °C`;
       document.getElementById("heartValue").innerText = `${heart} bpm`;
-      document.getElementById("bpValue").innerText = `${bp} mmHg`;
+      document.getElementById("spo2").innerText = `${bp} mmHg`;
 
       tempChart.update();
       heartChart.update();
@@ -221,8 +221,8 @@
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
-        if (data.temperature && data.heartRate && data.bloodPressure) {
-          updateCharts(data.temperature, data.heartRate, data.bloodPressure);
+        if (data.temperature && data.heartRate && data.spo2) {
+          updateCharts(data.temperature, data.heartRate, data.spo2);
         }
       } catch (e) {
         console.error('Error fetching data:', e);

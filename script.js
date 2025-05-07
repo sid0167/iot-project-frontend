@@ -30,7 +30,7 @@ async function fetchHealthData() {
   const data = await res.json();
   document.getElementById("temperature").textContent = data.temperature ?? "--";
   document.getElementById("bloodPressure").textContent = data.bloodPressure ?? "--";
-  document.getElementById("heartRate").textContent = data.heartRate ?? "--";
+  document.getElementById("spo2").textContent = data.spo2 ?? "--";
 }
 
 function logout() {
