@@ -21,12 +21,18 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .navbar button {
+      margin-left: 10px;
     }
 
     .stats {
       display: flex;
       justify-content: space-around;
       margin: 2rem;
+      flex-wrap: wrap;
     }
 
     .card {
@@ -35,8 +41,9 @@
       border-radius: 8px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
       flex: 1;
-      margin: 0 1rem;
+      margin: 1rem;
       text-align: center;
+      min-width: 250px;
     }
 
     .charts {
@@ -70,172 +77,191 @@
 <body>
   <div class="navbar">
     <h2>Health Dashboard</h2>
-    
-    <button onclick="logout()" style="background:#d63031; color:white; padding:8px 16px; border:none; border-radius:4px;">Logout</button>
-    <button onclick="location.href='/compare.html'" style="background:#6c5ce7; color:white; padding:8px 16px; border:none; border-radius:4px; margin-left: 10px;">
-      Compare
-    </button>
-      <button onclick="location.href='/lifePulseTimeline.html'" style="background:#6c5ce7; color:white; padding:8px 16px; border:none; border-radius:4px; margin-left: 10px;">
-        Timeline
-      </button>
-      <button onclick="location.href='/gemini-assistant.html'" style="background:#6c5ce7; color:white; padding:8px 16px; border:none; border-radius:4px; margin-left: 10px;">
-        Ai assistant
-      </button>
-      <button onclick="openBMI()" style="background:#6c5ce7; color:white; padding:8px 16px; border:none; border-radius:4px; margin-left: 10px;">
-        BMI Calculator
-      </button>
+    <div>
+      <button onclick="logout()" style="background:#d63031; color:white; padding:8px 16px; border:none; border-radius:4px;">Logout</button>
+      <button onclick="location.href='/compare.html'" style="background:#6c5ce7; color:white; padding:8px 16px; border:none; border-radius:4px;">Compare</button>
+      <button onclick="location.href='/lifePulseTimeline.html'" style="background:#6c5ce7; color:white; padding:8px 16px; border:none; border-radius:4px;">Timeline</button>
+      <button onclick="location.href='/gemini-assistant.html'" style="background:#6c5ce7; color:white; padding:8px 16px; border:none; border-radius:4px;">AI Assistant</button>
+      <button onclick="openBMI()" style="background:#6c5ce7; color:white; padding:8px 16px; border:none; border-radius:4px;">BMI Calculator</button>
+    </div>
   </div>
 
-  <!-- Inside the .stats div -->
-<div class="stats">
-  <div class="card">
-    <h3>Temperature</h3>
-    <p id="tempValue">-- °C</p>
+  <div class="stats">
+    <div class="card">
+      <h3>Temperature</h3>
+      <p id="tempValue">-- °C</p>
+    </div>
+    <div class="card">
+      <h3>Humidity</h3>
+      <p id="humidityValue">-- %</p>
+    </div>
+    <div class="card">
+      <h3>Air Quality</h3>
+      <p id="airValue">--</p>
+    </div>
   </div>
-  <div class="card">
-    <h3>Humidity</h3>
-    <p id="humidityValue">-- %</p>
+
+  <div class="card" style="margin: 2rem;">
+    <h3>Prediction (Last 7 Days)</h3>
+    <p><strong>Avg. Temperature:</strong> <span id="avgTemp">-- °C</span></p>
+    <p><strong>Avg. Humidity:</strong> <span id="avgHumidity">-- %</span></p>
+    <p><strong>Status:</strong> <span id="prediction">--</span></p>
   </div>
-  <div class="card">
-    <h3>Air Quality</h3>
-    <p id="airValue">--</p>
+
+  <div class="charts">
+    <canvas id="tempChart"></canvas>
+    <canvas id="humidityChart"></canvas>
+    <canvas id="airChart"></canvas>
+    <button id="resetBtn" onclick="resetCharts()">Reset Charts</button>
   </div>
-</div>
-
-<!-- Update Prediction Card -->
-<div class="card" style="margin: 2rem;">
-  <h3>Prediction (Last 7 Days)</h3>
-  <p><strong>Avg. Temperature:</strong> <span id="avgTemp">-- °C</span></p>
-  <p><strong>Avg. Humidity:</strong> <span id="avgHumidity">-- %</span></p>
-  <p><strong>Status:</strong> <span id="prediction">--</span></p>
-</div>
-
-<!-- Chart Containers -->
-<div class="charts">
-  <canvas id="tempChart"></canvas>
-  <canvas id="humidityChart"></canvas>
-  <canvas id="airChart"></canvas>
-  <button id="resetBtn" onclick="resetCharts()">Reset Charts</button>
-</div>
-
-  
 
   <script>
-   const tempData = [];
-const humidityData = [];
-const airData = [];
-const labels = [];
+    const tempData = [];
+    const humidityData = [];
+    const airData = [];
+    const labels = [];
 
-const tempCtx = document.getElementById('tempChart').getContext('2d');
-const humidityCtx = document.getElementById('humidityChart').getContext('2d');
-const airCtx = document.getElementById('airChart').getContext('2d');
+    const tempCtx = document.getElementById('tempChart').getContext('2d');
+    const humidityCtx = document.getElementById('humidityChart').getContext('2d');
+    const airCtx = document.getElementById('airChart').getContext('2d');
 
-const tempChart = new Chart(tempCtx, {
-  type: 'line',
-  data: {
-    labels: labels,
-    datasets: [{
-      label: 'Temperature (°C)',
-      data: tempData,
-      borderColor: '#e17055',
-      fill: false
-    }]
-  }
-});
-
-const humidityChart = new Chart(humidityCtx, {
-  type: 'line',
-  data: {
-    labels: labels,
-    datasets: [{
-      label: 'Humidity (%)',
-      data: humidityData,
-      borderColor: '#00cec9',
-      fill: false
-    }]
-  }
-});
-
-const airChart = new Chart(airCtx, {
-  type: 'line',
-  data: {
-    labels: labels,
-    datasets: [{
-      label: 'Air Quality',
-      data: airData,
-      borderColor: '#6c5ce7',
-      fill: false
-    }]
-  }
-});
-
-function updateCharts(temp, humidity, air) {
-  const time = new Date().toLocaleTimeString();
-  labels.push(time);
-
-  tempData.push(temp);
-  humidityData.push(humidity);
-  airData.push(air);
-
-  document.getElementById("tempValue").innerText = `${temp} °C`;
-  document.getElementById("humidityValue").innerText = `${humidity} %`;
-  document.getElementById("airValue").innerText = air;
-
-  tempChart.update();
-  humidityChart.update();
-  airChart.update();
-}
-
-function resetCharts() {
-  labels.length = 0;
-  tempData.length = 0;
-  humidityData.length = 0;
-  airData.length = 0;
-
-  tempChart.update();
-  humidityChart.update();
-  airChart.update();
-}
-
-async function fetchData() {
-  const token = localStorage.getItem("token");
-  if (!token) return;
-
-  try {
-    const res = await fetch('https://iot-project-25ym.onrender.com/api/health/latest', {
-      headers: { 'Authorization': `Bearer ${token}` }
+    const tempChart = new Chart(tempCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Temperature (°C)',
+          data: tempData,
+          borderColor: '#e17055',
+          fill: false
+        }]
+      }
     });
-    const data = await res.json();
-    if (data.temperature && data.humidity && data.AIR !== undefined) {
-      updateCharts(data.temperature, data.humidity, data.AIR);
-    }
-  } catch (e) {
-    console.error('Error fetching data:', e);
-  }
-}
 
-async function fetchPrediction() {
-  const token = localStorage.getItem("token");
-  if (!token) return;
-
-  try {
-    const res = await fetch('https://iot-project-25ym.onrender.com/api/health/predict', {
-      headers: { 'Authorization': `Bearer ${token}` }
+    const humidityChart = new Chart(humidityCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Humidity (%)',
+          data: humidityData,
+          borderColor: '#00cec9',
+          fill: false
+        }]
+      }
     });
-    const data = await res.json();
 
-    if (data.averageTemperature && data.averageHumidity && data.prediction) {
-      document.getElementById("avgTemp").innerText = `${data.averageTemperature} °C`;
-      document.getElementById("avgHumidity").innerText = `${data.averageHumidity} %`;
-      document.getElementById("prediction").innerText = data.prediction;
-    } else {
-      document.getElementById("prediction").innerText = data.message || "Not enough data";
+    const airChart = new Chart(airCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Air Quality',
+          data: airData,
+          borderColor: '#6c5ce7',
+          fill: false
+        }]
+      }
+    });
+
+    function updateCharts(temp, humidity, air) {
+      const time = new Date().toLocaleTimeString();
+      labels.push(time);
+
+      tempData.push(temp);
+      humidityData.push(humidity);
+      airData.push(air);
+
+      document.getElementById("tempValue").innerText = `${temp} °C`;
+      document.getElementById("humidityValue").innerText = `${humidity} %`;
+      document.getElementById("airValue").innerText = air;
+
+      tempChart.update();
+      humidityChart.update();
+      airChart.update();
     }
-  } catch (e) {
-    console.error("Prediction error:", e);
-  }
-  
-}
-</script>
+
+    function resetCharts() {
+      labels.length = 0;
+      tempData.length = 0;
+      humidityData.length = 0;
+      airData.length = 0;
+
+      tempChart.update();
+      humidityChart.update();
+      airChart.update();
+    }
+
+    async function fetchData() {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const res = await fetch('https://iot-project-25ym.onrender.com/api/health/latest', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.status === 401) {
+          alert("Session expired. Please log in again.");
+          logout();
+          return;
+        }
+
+        const data = await res.json();
+        if (data.temperature && data.humidity && data.air !== undefined) {
+          updateCharts(data.temperature, data.humidity, data.air);
+        }
+      } catch (e) {
+        console.error('Error fetching data:', e);
+      }
+    }
+
+    async function fetchPrediction() {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const res = await fetch('https://iot-project-25ym.onrender.com/api/health/predict', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.status === 401) {
+          alert("Session expired. Please log in again.");
+          logout();
+          return;
+        }
+
+        const data = await res.json();
+
+        if (data.averageTemperature && data.averageHumidity && data.prediction) {
+          document.getElementById("avgTemp").innerText = `${data.averageTemperature.toFixed(1)} °C`;
+          document.getElementById("avgHumidity").innerText = `${data.averageHumidity.toFixed(1)} %`;
+          document.getElementById("prediction").innerText = data.prediction;
+        } else {
+          document.getElementById("prediction").innerText = data.message || "Not enough data";
+        }
+      } catch (e) {
+        console.error("Prediction error:", e);
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      window.location.href = "/login.html";
+    }
+
+    function openBMI() {
+      window.location.href = "/bmi.html";
+    }
+
+    // Load data on page load
+    window.onload = () => {
+      fetchData();
+      fetchPrediction();
+
+      // Optional: refresh every 60 seconds
+      setInterval(fetchData, 60000);
+    };
+  </script>
 </body>
 </html>
