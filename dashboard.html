@@ -101,11 +101,12 @@
     </div>
   </div>
   <div class="card" style="margin: 2rem;">
-    <h3>Prediction (Last 7 Days)</h3>
-    <p><strong>Avg. Temperature:</strong> <span id="avgTemp">-- °C</span></p>
-    <p><strong>Avg. Heart Rate:</strong> <span id="avgHeart">-- bpm</span></p>
-    <p><strong>Status:</strong> <span id="prediction">--</span></p>
-  </div>
+    <div class="card" style="margin: 2rem;">
+      <h3>Health Prediction</h3>
+      <p><strong>Temperature Status:</strong> <span id="tempStatus">--</span></p>
+      <p><strong>Heart Rate Status:</strong> <span id="heartStatus">--</span></p>
+    </div>
+    
   
   <div class="charts">
     <canvas id="tempChart"></canvas>
@@ -128,21 +129,24 @@
   if (!token) return;
 
   try {
-    const res = await fetch('https://iot-project-25ym.onrender.com/api/health/predict', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await res.json();
+  const res = await fetch('https://iot-project-25ym.onrender.com/api/health/predict', {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  const data = await res.json();
 
-    if (data.averageTemperature && data.averageHeartRate && data.prediction) {
-      document.getElementById("avgTemp").innerText = `${data.averageTemperature} °C`;
-      document.getElementById("avgHeart").innerText = `${data.averageHeartRate} bpm`;
-      document.getElementById("prediction").innerText = data.prediction;
-    } else {
-      document.getElementById("prediction").innerText = data.message || "Not enough data";
-    }
-  } catch (e) {
-    console.error("Prediction error:", e);
+  if (data.temperatureStatus && data.heartRateStatus) {
+    document.getElementById("tempStatus").innerText = data.temperatureStatus;
+    document.getElementById("heartStatus").innerText = data.heartRateStatus;
+  } else {
+    document.getElementById("tempStatus").innerText = data.message || "No data";
+    document.getElementById("heartStatus").innerText = data.message || "No data";
   }
+} catch (e) {
+  console.error("Prediction error:", e);
+  document.getElementById("tempStatus").innerText = "Error";
+  document.getElementById("heartStatus").innerText = "Error";
+}
+
 }
 
     const tempChart = new Chart(tempCtx, {
