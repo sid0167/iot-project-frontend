@@ -4,16 +4,17 @@
   <meta charset="UTF-8">
   <title>IoT Health Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css?family=Ubuntu&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Ubuntu:400,700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       margin: 0;
       font-family: 'Ubuntu', sans-serif;
-      background: #f0f2f5;
+      background: linear-gradient(135deg, #eef2f3, #dfe6e9);
       color: #333;
     }
 
+    /* Navbar */
     .navbar {
       background: #2d3436;
       color: white;
@@ -21,69 +22,130 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
     }
 
+    .navbar h2 {
+      margin: 0;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: #6c5ce7;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .btn:hover {
+      background: #5a4ae3;
+      transform: translateY(-2px);
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .btn-danger {
+      background: #d63031;
+    }
+
+    .btn-danger:hover {
+      background: #c0392b;
+    }
+
+    /* Stats Section */
     .stats {
       display: flex;
       justify-content: space-around;
       margin: 2rem;
+      flex-wrap: wrap;
+      gap: 20px;
     }
 
     .card {
-      background: white;
+      background: rgba(255, 255, 255, 0.9);
       padding: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
       flex: 1;
-      margin: 0 1rem;
+      min-width: 220px;
       text-align: center;
+      transition: 0.3s;
     }
 
-    .charts {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    }
+
+    /* Health Prediction */
+    .prediction {
       margin: 2rem;
+      padding: 2rem;
+      border-radius: 16px;
+      background: white;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+      animation: fadeIn 0.8s ease-in-out;
+    }
+
+    /* Charts Grid */
+    .charts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin: 2rem;
+      justify-content: center;
+      align-items: center;
     }
 
     canvas {
-      max-width: 90%;
-      margin: 1rem 0;
+      width: 100% !important;
+      height: 300px !important;
     }
 
+    /* Reset Button */
     #resetBtn {
-      margin: 1rem;
+      margin: 1rem auto;
+      display: block;
       padding: 0.8rem 1.5rem;
       background: #d63031;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       color: white;
       font-weight: bold;
       cursor: pointer;
+      transition: 0.3s;
     }
 
     #resetBtn:hover {
       background: #c0392b;
+      transform: scale(1.05);
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
   <div class="navbar">
     <h2>Health Dashboard</h2>
-    
-    <button onclick="logout()" style="background:#d63031; color:white; padding:8px 16px; border:none; border-radius:4px;">Logout</button>
-    <button onclick="location.href='/compare.html'" style="background:#6c5ce7; color:white; padding:8px 16px; border:none; border-radius:4px; margin-left: 10px;">
-      Compare
-    </button>
-      <button onclick="location.href='/lifePulseTimeline.html'" style="background:#6c5ce7; color:white; padding:8px 16px; border:none; border-radius:4px; margin-left: 10px;">
-        Timeline
-      </button>
-      <button onclick="location.href='/gemini-assistant.html'" style="background:#6c5ce7; color:white; padding:8px 16px; border:none; border-radius:4px; margin-left: 10px;">
-        Ai assistant
-      </button>
-      <button onclick="openBMI()" style="background:#6c5ce7; color:white; padding:8px 16px; border:none; border-radius:4px; margin-left: 10px;">
-        BMI Calculator
-      </button>
+    <div class="nav-buttons">
+      <button class="btn btn-danger" onclick="logout()">Logout</button>
+      <button class="btn" onclick="location.href='/compare.html'">Compare</button>
+      <button class="btn" onclick="location.href='/lifePulseTimeline.html'">Timeline</button>
+      <button class="btn" onclick="location.href='/gemini-assistant.html'">AI Assistant</button>
+      <button class="btn" onclick="openBMI()">BMI Calculator</button>
+    </div>
   </div>
 
   <div class="stats">
@@ -96,25 +158,26 @@
       <p id="heartValue">-- bpm</p>
     </div>
     <div class="card">
-      <h3>spo2</h3>
+      <h3>SpO2</h3>
       <p id="spo2Value">-- %</p>
     </div>
   </div>
-  <div class="card" style="margin: 2rem;">
-    <div class="card" style="margin: 2rem;">
-      <h3>Health Prediction</h3>
-      <p><strong>Temperature Status:</strong> <span id="tempStatus">--</span></p>
-      <p><strong>Heart Rate Status:</strong> <span id="heartStatus">--</span></p>
-    </div>
-    
-  
+
+  <div class="prediction">
+    <h3>Health Prediction</h3>
+    <p><strong>Temperature Status:</strong> <span id="tempStatus">--</span></p>
+    <p><strong>Heart Rate Status:</strong> <span id="heartStatus">--</span></p>
+  </div>
+
   <div class="charts">
     <canvas id="tempChart"></canvas>
     <canvas id="heartChart"></canvas>
     <canvas id="spo2Chart"></canvas>
-    <button id="resetBtn" onclick="resetCharts()">Reset Charts</button>
   </div>
 
+  <button id="resetBtn" onclick="resetCharts()">Reset Charts</button>
+
+  <!-- ✅ Keep your existing script here -->
   <script>
     const tempData = [];
     const heartData = [];
