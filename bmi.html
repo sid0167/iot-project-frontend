@@ -7,66 +7,116 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f5f7fa;
-      padding: 2rem;
-      max-width: 500px;
-      margin: auto;
+      background: linear-gradient(135deg, #74b9ff, #0984e3);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 1rem;
     }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+      animation: fadeIn 0.8s ease-in-out;
+    }
+
     h1 {
       text-align: center;
-      color: #333;
+      color: #2d3436;
+      margin-bottom: 1.5rem;
     }
+
     .form-group {
-      margin-bottom: 1rem;
+      margin-bottom: 1.2rem;
     }
+
     label {
       display: block;
-      font-weight: bold;
+      font-weight: 600;
       margin-bottom: 0.5rem;
+      color: #2d3436;
     }
+
     input {
       width: 100%;
       padding: 0.75rem;
       border: 1px solid #ccc;
-      border-radius: 5px;
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: 0.3s;
     }
+
+    input:focus {
+      border-color: #0984e3;
+      box-shadow: 0 0 6px rgba(9,132,227,0.5);
+      outline: none;
+    }
+
     button {
       width: 100%;
-      padding: 0.75rem;
-      background-color: #28a745;
+      padding: 0.9rem;
+      background: linear-gradient(135deg, #00cec9, #0984e3);
       border: none;
       color: white;
-      font-size: 1rem;
-      border-radius: 5px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 12px;
       cursor: pointer;
+      transition: 0.3s;
     }
+
     button:hover {
-      background-color: #218838;
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
     }
+
     #result {
-      margin-top: 1rem;
+      margin-top: 1.5rem;
       text-align: center;
       font-weight: bold;
-      font-size: 1.1rem;
-      color: #333;
+      font-size: 1.2rem;
+      color: #2d3436;
+      padding: 1rem;
+      border-radius: 12px;
+      display: none;
+      animation: fadeIn 0.6s ease-in-out;
+    }
+
+    /* Result category colors */
+    .underweight { background: #ffeaa7; color: #d35400; }
+    .normal { background: #55efc4; color: #2d3436; }
+    .overweight { background: #fab1a0; color: #c0392b; }
+    .obese { background: #ff7675; color: white; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
-  <h1>Enter Your Details</h1>
-  <div class="form-group">
-    <label for="height">Height (in cm)</label>
-    <input type="number" id="height" placeholder="e.g. 170" required />
+  <div class="card">
+    <h1>💪 BMI Calculator</h1>
+    <div class="form-group">
+      <label for="height">Height (in cm)</label>
+      <input type="number" id="height" placeholder="e.g. 170" required />
+    </div>
+    <div class="form-group">
+      <label for="weight">Weight (in kg)</label>
+      <input type="number" id="weight" placeholder="e.g. 65" required />
+    </div>
+    <button onclick="submitBMI()">Submit & Calculate BMI</button>
+    <div id="result"></div>
   </div>
-  <div class="form-group">
-    <label for="weight">Weight (in kg)</label>
-    <input type="number" id="weight" placeholder="e.g. 65" required />
-  </div>
-  <button onclick="submitBMI()">Submit & Calculate BMI</button>
-  <div id="result"></div>
 
   <script>
-    const BASE_URL = 'https://iot-project-25ym.onrender.com'; // ✅ Replace if needed
+    const BASE_URL = 'https://iot-project-25ym.onrender.com';
     const token = localStorage.getItem('token');
 
     async function submitBMI() {
@@ -75,7 +125,9 @@
       const resultDiv = document.getElementById('result');
 
       if (!height || !weight) {
-        resultDiv.textContent = 'Please enter both height and weight.';
+        resultDiv.textContent = '⚠️ Please enter both height and weight.';
+        resultDiv.className = "";
+        resultDiv.style.display = "block";
         return;
       }
 
@@ -91,13 +143,37 @@
 
         const data = await res.json();
         if (res.ok) {
-          resultDiv.textContent = `✅ BMI Recorded: ${data.bmi}`;
+          const bmi = data.bmi;
+          let category = "";
+          let className = "";
+
+          if (bmi < 18.5) {
+            category = "Underweight";
+            className = "underweight";
+          } else if (bmi >= 18.5 && bmi < 25) {
+            category = "Normal Weight";
+            className = "normal";
+          } else if (bmi >= 25 && bmi < 30) {
+            category = "Overweight";
+            className = "overweight";
+          } else {
+            category = "Obese";
+            className = "obese";
+          }
+
+          resultDiv.textContent = `✅ BMI: ${bmi} (${category})`;
+          resultDiv.className = className;
+          resultDiv.style.display = "block";
         } else {
           resultDiv.textContent = `❌ ${data.message}`;
+          resultDiv.className = "";
+          resultDiv.style.display = "block";
         }
       } catch (err) {
         console.error(err);
         resultDiv.textContent = '❌ Something went wrong.';
+        resultDiv.className = "";
+        resultDiv.style.display = "block";
       }
     }
   </script>
