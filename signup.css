@@ -10,6 +10,7 @@ body {
     margin: 7em auto;
     border-radius: 1.5em;
     box-shadow: 0px 11px 35px 2px rgba(0, 0, 0, 0.14);
+    position: relative;
 }
 
 .sign {
@@ -103,6 +104,15 @@ a {
     .main {
         border-radius: 0px;
     }
+}
+
+/* place a button centered at the bottom of the .main card */
+.signin {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 18px;
+    text-align: center;
 }
     
 
