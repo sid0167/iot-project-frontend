@@ -16,11 +16,12 @@ async function signup() {
     const data = await res.json();
 
     if (res.ok) {
-      msg.textContent = 'Signup successful! Redirecting to login...';
+      msg.textContent = 'Registered successfully.';
       msg.style.color = 'green';
 
+      // After showing registered status, redirect to sign-in page
       setTimeout(() => {
-        window.location.href = '/login2.html'; // Redirect to signin page
+        window.location.href = '/login2.html';
       }, 1500);
     } else {
       msg.textContent = data.message || 'Signup failed.';

@@ -81,7 +81,8 @@ font-family: 'Ubuntu', sans-serif;
     padding-bottom: 10px;
     padding-top: 10px;
     font-family: 'Ubuntu', sans-serif;
-    margin-left: 35%;
+        display: block;
+        margin: 20px auto 0 auto;
     font-size: 13px;
     box-shadow: 0 0 20px 1px rgba(0, 0, 0, 0.04);
 }
