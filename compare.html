@@ -21,29 +21,17 @@
 <script src="compare.js"></script>
 
   
-  <title>Ball Demo</title>
+  <title>Compare Results</title>
 </head>
 <body>
   <a class="back-button" href="dashboard.html">Back</a>
-  <div class="radio-input" id="theme">
-    <label class="label">
-      <input type="radio" checked name="value-radio" value="1" />
-      <p class="text">Stress Ball</p>
-    </label>
-    <label class="label">
-      <input type="radio" name="value-radio" value="2" />
-      <p class="text">Tennis Ball</p>
-    </label>
-  </div>
-
-  <div class="presentation">
-    <h1>STRESS BALL</h1>
-    <p>Feel all your stress fade away</p>
-  </div>
-
-  <div class="ball"></div>
-
-  <div class="hint backdrop">Drag and release the ball to make it spin and bounce</div>
+  <main style="max-width:900px;margin:3rem auto;padding:1rem">
+    <h1 style="font-family:Montserrat,Inter,sans-serif; margin-bottom:0.5rem">Compare Results</h1>
+    <p style="color:#555;margin-bottom:1rem">Use the Compare panel (top-right) to inspect and compare health records.</p>
+    <section id="compare-area">
+      <!-- compare.js injects a small panel and handles comparisons -->
+    </section>
+  </main>
   
   
 </body>
