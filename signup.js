@@ -3,7 +3,7 @@ async function signup() {
   const password = document.getElementById('password').value.trim();
   const msg = document.getElementById('msg');
 
-  msg.textContent = 'Processing...';
+  msg.textContent = 'Registered successfully.';
   msg.style.color = 'gray';
   msg.style.visibility = 'visible';
   // add an AbortController so we don't remain stuck on 'Processing...'
