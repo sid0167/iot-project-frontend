@@ -195,3 +195,48 @@ body {
     box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
   }
 }
+
+/* Compare Results styles */
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.metric-card {
+  background: #fff;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+.metric-card h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.metric-values {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.metric-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111;
+}
+
+.metric-diff {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.metric-diff.improved { color: #16a34a; }
+.metric-diff.declined { color: #dc2626; }
+
+@media (max-width: 700px) {
+  .compare-grid { grid-template-columns: 1fr; }
+}

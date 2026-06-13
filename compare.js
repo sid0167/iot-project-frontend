@@ -259,3 +259,65 @@ document.addEventListener("mouseout", (e) => {
   compare();
 
 })();
+
+// Main compare area: latest vs previous
+(function renderMainComparison() {
+  const target = document.getElementById('compare-area');
+  if (!target) return;
+  if (typeof window === 'undefined' || !Array.isArray(window.healthRecords) || window.healthRecords.length < 2) {
+    target.innerHTML = '<p style="color:#666">Not enough records to compare.</p>';
+    return;
+  }
+
+  const records = window.healthRecords.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+  const current = records[0];
+  const previous = records[1];
+
+  const metrics = [
+    { key: 'temperature', label: 'Temperature', unit: '°C', decimals: 1, higherBetter: false },
+    { key: 'heartRate', label: 'Heart Rate', unit: 'bpm', decimals: 0, higherBetter: false },
+    { key: 'spo2', label: 'SpO₂', unit: '%', decimals: 0, higherBetter: true },
+    { key: 'bmi', label: 'BMI', unit: '', decimals: 1, higherBetter: false }
+  ];
+
+  const grid = document.createElement('div');
+  grid.className = 'compare-grid';
+
+  metrics.forEach(m => {
+    const a = Number(previous[m.key]);
+    const b = Number(current[m.key]);
+    const diff = (b - a);
+    const diffDisplay = m.decimals >= 1 ? diff.toFixed(m.decimals) : Math.round(diff);
+    const improved = m.higherBetter ? b > a : b < a;
+
+    const card = document.createElement('div');
+    card.className = 'metric-card';
+    card.innerHTML = `
+      <h3>${m.label}</h3>
+      <div class="metric-values">
+        <div>
+          <div style="font-size:12px;color:#666">Previous</div>
+          <div class="metric-value">${a}${m.unit}</div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#666;text-align:right">Current</div>
+          <div class="metric-value" style="text-align:right">${b}${m.unit}</div>
+        </div>
+      </div>
+      <div class="metric-diff ${improved ? 'improved' : 'declined'}">
+        Difference: ${diff >= 0 ? '+' : ''}${diffDisplay} ${m.unit}
+      </div>
+    `;
+
+    grid.appendChild(card);
+  });
+
+  // header summary
+  const header = document.createElement('div');
+  header.style.marginBottom = '12px';
+  header.innerHTML = `<div style="font-weight:700">Comparing: ${new Date(previous.date).toLocaleDateString()} → ${new Date(current.date).toLocaleDateString()}</div>`;
+
+  target.innerHTML = '';
+  target.appendChild(header);
+  target.appendChild(grid);
+})();
