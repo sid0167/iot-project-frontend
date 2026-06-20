@@ -5,9 +5,11 @@
   <title>Life Pulse Timeline</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://fonts.googleapis.com/css?family=Ubuntu&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="back-button.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script src="data.js"></script>
 
   <style>
     body {
@@ -99,7 +101,7 @@
 <body>
   <div class="navbar">
     <h2>Life Pulse Timeline</h2>
-    <button onclick="location.href='/dashboard.html'" style="background:#d63031; padding: 8px 16px; color: white; border: none; border-radius: 5px;">Back</button>
+    <a class="back-button" href="dashboard.html">Back</a>
   </div>
 
   <div class="buttons">
@@ -116,21 +118,32 @@
   <script>
     let fullData = [];
 
-    async function fetchTimelineData() {
-      const token = localStorage.getItem('token');
-      const res = await fetch('https://iot-project-25ym.onrender.com/api/health/timeline', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      fullData = data;
-      populateMonthFilter(data);
-      renderTimeline(data);
-      generateSummary(data);
+    function fetchTimelineData() {
+      // Use frontend mock data provided by data.js when available
+      if (typeof window !== 'undefined' && Array.isArray(window.healthRecords)) {
+        fullData = window.healthRecords.slice();
+        // normalize: ensure `date` field exists (mock uses `date`)
+        fullData.forEach(r => { if (!r.date && r.timestamp) r.date = r.timestamp; });
+        // sort newest first
+        fullData.sort((a, b) => new Date(b.date) - new Date(a.date));
+        populateMonthFilter(fullData);
+        renderTimeline(fullData);
+        generateSummary(fullData);
+      } else {
+        fullData = [];
+        document.getElementById('timeline').innerHTML = '<p style="text-align:center; padding:1rem">No records available</p>';
+        document.getElementById('summaryBox').innerText = 'No data available';
+      }
     }
 
     function populateMonthFilter(data) {
       const select = document.getElementById('monthFilter');
-      const months = new Set(data.map(d => new Date(d.timestamp).toLocaleString('default', { month: 'long', year: 'numeric' })));
+      select.innerHTML = '';
+      const allOpt = document.createElement('option');
+      allOpt.value = 'all';
+      allOpt.textContent = 'All Months';
+      select.appendChild(allOpt);
+      const months = new Set(data.map(d => new Date(d.date).toLocaleString('default', { month: 'long', year: 'numeric' })));
       months.forEach(month => {
         const opt = document.createElement('option');
         opt.value = month;
@@ -142,40 +155,48 @@
     function renderTimeline(data) {
       const container = document.getElementById('timeline');
       container.innerHTML = '';
+      if (!data || data.length === 0) {
+        container.innerHTML = '<p style="text-align:center; padding:1rem">No records found</p>';
+        return;
+      }
       data.forEach(entry => {
         const div = document.createElement('div');
         div.className = 'entry';
+        const dateStr = new Date(entry.date).toLocaleString();
         div.innerHTML = `
           <div class="entry-content">
-            <strong>${new Date(entry.timestamp).toLocaleString()}</strong><br>
-            Temperature: ${entry.temperature} °C<br>
-            Heart Rate: ${entry.heartRate} bpm<br>
-            Blood Pressure: ${entry.bloodPressure} mmHg
+            <strong>${dateStr}</strong>
+            <div style="margin-top:8px">
+              <div>Temperature: <strong>${entry.temperature} °C</strong></div>
+              <div>Heart Rate: <strong>${entry.heartRate} bpm</strong></div>
+              <div>SpO₂: <strong>${entry.spo2}%</strong></div>
+              <div>BMI: <strong>${entry.bmi}</strong></div>
+            </div>
           </div>`;
         container.appendChild(div);
       });
     }
 
-    function filterByMonth() {
+    function getDisplayedData() {
       const selected = document.getElementById('monthFilter').value;
-      if (selected === 'all') {
-        renderTimeline(fullData);
-        generateSummary(fullData);
-        return;
-      }
-      const filtered = fullData.filter(d =>
-        new Date(d.timestamp).toLocaleString('default', { month: 'long', year: 'numeric' }) === selected
-      );
+      if (selected === 'all' || !selected) return fullData;
+      return fullData.filter(d => new Date(d.date).toLocaleString('default', { month: 'long', year: 'numeric' }) === selected);
+    }
+
+    function filterByMonth() {
+      const filtered = getDisplayedData();
       renderTimeline(filtered);
       generateSummary(filtered);
     }
 
     function exportToCSV() {
-      const csv = Papa.unparse(fullData.map(d => ({
-        timestamp: d.timestamp,
+      const data = getDisplayedData();
+      const csv = Papa.unparse(data.map(d => ({
+        date: d.date,
         temperature: d.temperature,
         heartRate: d.heartRate,
-        bloodPressure: d.bloodPressure
+        spo2: d.spo2,
+        bmi: d.bmi
       })));
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
@@ -188,29 +209,33 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       doc.setFontSize(12);
-      fullData.forEach((d, i) => {
-        doc.text(`Date: ${new Date(d.timestamp).toLocaleString()}`, 10, 10 + i * 10);
-        doc.text(`Temp: ${d.temperature}°C | HR: ${d.heartRate} bpm | BP: ${d.bloodPressure}`, 10, 15 + i * 10);
-        if (i > 25) doc.addPage(); // Add page break
+      const data = getDisplayedData();
+      data.forEach((d, i) => {
+        const y = 10 + i * 10;
+        doc.text(`Date: ${new Date(d.date).toLocaleString()}`, 10, y);
+        doc.text(`Temp: ${d.temperature}°C | HR: ${d.heartRate} bpm | SpO₂: ${d.spo2}% | BMI: ${d.bmi}`, 10, y + 5);
+        if ((i + 1) % 25 === 0) doc.addPage();
       });
       doc.save('health_data.pdf');
     }
 
     function generateSummary(data) {
-      if (data.length === 0) return document.getElementById('summaryBox').innerText = "No data available";
+      if (!data || data.length === 0) return document.getElementById('summaryBox').innerText = "No data available";
 
       const avg = arr => (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2);
       const tempAvg = avg(data.map(d => d.temperature));
       const hrAvg = avg(data.map(d => d.heartRate));
-      const bpAvg = avg(data.map(d => d.bloodPressure));
+      const spo2Avg = avg(data.map(d => d.spo2));
+      const bmiAvg = avg(data.map(d => d.bmi));
       let status = 'Normal';
-      if (tempAvg > 37.5 || hrAvg > 90 || bpAvg > 130) status = 'High';
-      else if (tempAvg < 36 || hrAvg < 60 || bpAvg < 100) status = 'Low';
+      if (tempAvg > 37.5 || hrAvg > 90 || spo2Avg < 95) status = 'High/Concern';
+      else if (tempAvg < 36 || hrAvg < 60) status = 'Low/Monitor';
 
       document.getElementById('summaryBox').innerText =
-        `Summary: Avg Temp: ${tempAvg} °C, HR: ${hrAvg} bpm, BP: ${bpAvg} mmHg → Health status: ${status}`;
+        `Summary: Avg Temp: ${tempAvg} °C, HR: ${hrAvg} bpm, SpO₂: ${spo2Avg}% , BMI: ${bmiAvg} → Status: ${status}`;
     }
 
+    // initialize
     fetchTimelineData();
   </script>
 </body>

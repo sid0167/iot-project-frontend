@@ -215,7 +215,7 @@
     <h2>Health Dashboard</h2>
     <div class="nav-buttons">
       <button class="btn btn-danger" onclick="logout()">Logout</button>
-      <button class="btn" onclick="location.href='/compare.html'">Compare</button>
+      <button class="btn" onclick="location.href='/compare.html'">Compare Results</button>
       <button class="btn" onclick="location.href='/lifePulseTimeline.html'">Timeline</button>
       <button class="btn" onclick="location.href='/gemini-assistant.html'">AI Assistant</button>
       <button class="btn" onclick="openBMI()">BMI Calculator</button>
@@ -259,8 +259,10 @@
 
   <button id="resetBtn" onclick="resetCharts()">Reset Charts</button>
 
-  <!-- Your JS logic stays same -->
+  <!-- Use local mock data (data.js) to populate dashboard cards and charts -->
+  <script src="data.js"></script>
   <script>
+    // prepare datasets
     const tempData = [];
     const heartData = [];
     const spo2Data = [];
@@ -270,135 +272,87 @@
     const heartCtx = document.getElementById('heartChart').getContext('2d');
     const spo2Ctx = document.getElementById('spo2Chart').getContext('2d');
 
-    async function fetchPrediction() {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-      try {
-        const res = await fetch('https://iot-project-25ym.onrender.com/api/health/predict', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.temperatureStatus && data.heartRateStatus) {
-          document.getElementById("tempStatus").innerText = data.temperatureStatus;
-          document.getElementById("heartStatus").innerText = data.heartRateStatus;
-        } else {
-          document.getElementById("tempStatus").innerText = data.message || "No data";
-          document.getElementById("heartStatus").innerText = data.message || "No data";
-        }
-      } catch (e) {
-        console.error("Prediction error:", e);
-        document.getElementById("tempStatus").innerText = "Error";
-        document.getElementById("heartStatus").innerText = "Error";
-      }
-    }
-
     const tempChart = new Chart(tempCtx, {
       type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Temperature (°C)',
-          data: tempData,
-          borderColor: '#d63031',
-          backgroundColor: 'rgba(214,48,49,0.2)',
-          fill: true,
-          tension: 0.3
-        }]
-      }
+      data: { labels, datasets: [{ label: 'Temperature (°C)', data: tempData, borderColor: '#d63031', backgroundColor: 'rgba(214,48,49,0.2)', fill: true, tension: 0.3 }] }
     });
 
     const heartChart = new Chart(heartCtx, {
       type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Heart Rate (bpm)',
-          data: heartData,
-          borderColor: '#6c5ce7',
-          backgroundColor: 'rgba(108,92,231,0.2)',
-          fill: true,
-          tension: 0.3
-        }]
-      }
+      data: { labels, datasets: [{ label: 'Heart Rate (bpm)', data: heartData, borderColor: '#6c5ce7', backgroundColor: 'rgba(108,92,231,0.2)', fill: true, tension: 0.3 }] }
     });
 
     const spo2Chart = new Chart(spo2Ctx, {
       type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'SpO₂ (%)',
-          data: spo2Data,
-          borderColor: '#00cec9',
-          backgroundColor: 'rgba(0,206,201,0.2)',
-          fill: true,
-          tension: 0.3
-        }]
-      }
+      data: { labels, datasets: [{ label: 'SpO₂ (%)', data: spo2Data, borderColor: '#00cec9', backgroundColor: 'rgba(0,206,201,0.2)', fill: true, tension: 0.3 }] }
     });
 
-    function updateCharts(temp, heart, spo2) {
-      const time = new Date().toLocaleTimeString();
-      labels.push(time);
+    function populateFromRecords(records) {
+      // sort chronological for charts (oldest first)
+      const sorted = records.slice().sort((a,b)=> new Date(a.date) - new Date(b.date));
+      labels.length = 0; tempData.length = 0; heartData.length = 0; spo2Data.length = 0;
+      sorted.forEach(r => {
+        labels.push(new Date(r.date).toLocaleDateString());
+        tempData.push(r.temperature);
+        heartData.push(r.heartRate);
+        spo2Data.push(r.spo2);
+      });
+      tempChart.update(); heartChart.update(); spo2Chart.update();
 
-      tempData.push(temp);
-      heartData.push(heart);
-      spo2Data.push(spo2);
+      // latest record
+      const latest = records.slice().sort((a,b)=> new Date(b.date)-new Date(a.date))[0];
+      if (latest) {
+        document.getElementById('tempValue').innerText = `${latest.temperature} °C`;
+        document.getElementById('heartValue').innerText = `${latest.heartRate} bpm`;
+        document.getElementById('spo2Value').innerText = `${latest.spo2} %`;
 
-      document.getElementById("tempValue").innerText = `${temp} °C`;
-      document.getElementById("heartValue").innerText = `${heart} bpm`;
-      document.getElementById("spo2Value").innerText = `${spo2} %`;
+        // Health prediction simple rules
+        function statusForTemp(t){ if (t>37.5) return 'High'; if (t<36) return 'Low'; return 'Normal'; }
+        function statusForHR(h){ if (h>90) return 'High'; if (h<60) return 'Low'; return 'Normal'; }
+        function statusForSpO2(s){ if (s<95) return 'Low'; return 'Normal'; }
 
-      tempChart.update();
-      heartChart.update();
-      spo2Chart.update();
+        document.getElementById('tempStatus').innerText = statusForTemp(latest.temperature);
+        document.getElementById('heartStatus').innerText = statusForHR(latest.heartRate);
+        // add spo2 status element or re-use existing
+        const spo2El = document.getElementById('spo2Value');
+        // also update prediction area text
+        const predTemp = document.getElementById('tempStatus');
+        const predHeart = document.getElementById('heartStatus');
+        // We will show SpO2 status in prediction section by appending
+        let spo2StatusEl = document.getElementById('spo2Status');
+        if(!spo2StatusEl){ spo2StatusEl = document.createElement('div'); spo2StatusEl.id='spo2Status'; document.querySelector('.prediction').appendChild(spo2StatusEl); }
+        spo2StatusEl.innerText = `SpO₂ Status: ${statusForSpO2(latest.spo2)}`;
+      }
+    }
+
+    // initialize from mock data if available
+    if (typeof window !== 'undefined' && Array.isArray(window.healthRecords)) {
+      populateFromRecords(window.healthRecords);
+    } else {
+      // fallback: keep placeholders
+      document.getElementById('tempValue').innerText = '-- °C';
+      document.getElementById('heartValue').innerText = '-- bpm';
+      document.getElementById('spo2Value').innerText = '-- %';
+      document.getElementById('tempStatus').innerText = 'No data';
+      document.getElementById('heartStatus').innerText = 'No data';
     }
 
     function resetCharts() {
-      labels.length = 0;
-      tempData.length = 0;
-      heartData.length = 0;
-      spo2Data.length = 0;
-
-      tempChart.update();
-      heartChart.update();
-      spo2Chart.update();
+      labels.length = 0; tempData.length = 0; heartData.length = 0; spo2Data.length = 0;
+      tempChart.update(); heartChart.update(); spo2Chart.update();
     }
 
-    async function fetchData() {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-      try {
-        const res = await fetch('https://iot-project-25ym.onrender.com/api/health/latest', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.temperature && data.heartRate && data.spo2) {
-          updateCharts(data.temperature, data.heartRate, data.spo2);
-        }
-      } catch (e) {
-        console.error('Error fetching data:', e);
-      }
-    }
-
-    setInterval(fetchData, 5000);
-    fetchPrediction();
-
-    function logout() {
-      localStorage.removeItem("token");
-      window.location.href = "/login2.html";
-    }
+    function logout() { localStorage.removeItem("token"); window.location.href = "/login2.html"; }
 
     function openBMI() {
-  const token = localStorage.getItem("token");
-
-  if (token) {
-    const url = `https://iot-project-25ym.onrender.com/bmi?token=${token}`;
-    window.location.href = url;
-  } else {
-    alert("You're not logged in!");
-  }
-}
+      const token = localStorage.getItem("token");
+      if (token) {
+        const url = `https://iot-project-25ym.onrender.com/bmi?token=${token}`;
+        window.location.href = url;
+      } else {
+        alert("You're not logged in!");
+      }
+    }
   </script>
 </body>
 </html>

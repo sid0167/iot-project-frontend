@@ -1,0 +1,23 @@
+.back-button {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  background: #d63031;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: inline-block;
+}
+
+.back-button:hover {
+  background: #c0392b;
+}
+
+.back-button:focus {
+  outline: 2px solid rgba(255,255,255,0.25);
+  outline-offset: 2px;
+}
