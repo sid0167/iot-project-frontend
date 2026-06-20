@@ -121,7 +121,13 @@
   <div class="card" style="max-width:920px; margin-top:1.25rem;">
     <h2 style="text-align:center; margin-top:0;">📊 Your BMI History</h2>
     <div style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center;">
-      <div id="history-list" style="flex:1 1 360px; min-width:260px;"></div>
+      <div id="history-list" style="flex:1 1 360px; min-width:260px;">
+        <canvas id="bmi-trend" style="width:100%; height:170px; margin-bottom:0.6rem; display:block"></canvas>
+        <div style="display:flex; gap:0.5rem;">
+          <button id="export-csv" style="flex:1; background:#0984e3; color:#fff; border-radius:8px; padding:0.55rem;">Export CSV</button>
+          <button id="download-json" style="flex:1; background:#6a5cff; color:#fff; border-radius:8px; padding:0.55rem;">Download JSON</button>
+        </div>
+      </div>
       <div style="flex:1 1 360px; min-width:260px;">
         <h3 style="margin-bottom:0.5rem">Health Tips</h3>
         <ul style="line-height:1.6; margin-top:0.4rem">
@@ -219,6 +225,29 @@
 
         container.appendChild(card);
       });
+
+      // update BMI trend chart
+      try {
+        const labels = list.map(i => new Date(i.date).toLocaleDateString());
+        const data = list.map(i => i.bmi);
+        const ctx = document.getElementById('bmi-trend');
+        if (window.bmiChart) {
+          window.bmiChart.data.labels = labels;
+          window.bmiChart.data.datasets[0].data = data;
+          window.bmiChart.update();
+        } else {
+          if (typeof Chart !== 'undefined') {
+            window.bmiChart = new Chart(ctx.getContext('2d'), {
+              type: 'line',
+              data: {
+                labels,
+                datasets: [{ label: 'BMI', data, borderColor: '#6a5cff', backgroundColor: '#6a5cff33', fill:true, tension:0.3 }]
+              },
+              options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false } } }
+            });
+          }
+        }
+      } catch (err) { console.warn('BMI chart update failed', err); }
     }
 
     async function submitBMI() {
@@ -282,6 +311,30 @@
     // initialize
     document.addEventListener('DOMContentLoaded', () => {
       renderHistory();
+    });
+
+    // Export CSV and Download JSON handlers
+    document.getElementById('export-csv').addEventListener('click', () => {
+      const key = 'bmi_history_v1';
+      const list = JSON.parse(localStorage.getItem(key) || '[]');
+      if (!list.length) return alert('No history to export');
+      const header = ['date','bmi','category','height','weight'];
+      const rows = list.map(r => header.map(h => JSON.stringify(r[h] ?? '')).join(','));
+      const csv = header.join(',') + '\n' + rows.join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'bmi_history.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('download-json').addEventListener('click', () => {
+      const key = 'bmi_history_v1';
+      const list = JSON.parse(localStorage.getItem(key) || '[]');
+      if (!list.length) return alert('No history to download');
+      const blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'bmi_history.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     });
   </script>
 </body>

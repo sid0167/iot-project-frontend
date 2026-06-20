@@ -61,6 +61,10 @@
                     <canvas id="chart-spo2" width="400" height="220"></canvas>
                 </div>
             </div>
+            <div style="margin-top:1rem; background:#fff; padding:1rem; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.08)">
+                <h3 style="margin:0 0 0.5rem">BMI Trend</h3>
+                <canvas id="chart-bmi" style="width:100%; height:180px"></canvas>
+            </div>
         </main>
 
     <section class="home" id="home">
@@ -493,6 +497,8 @@
                     buildChart('chart-temp','Temperature (°C)','#ff6b6b', r=>r.temperature);
                     buildChart('chart-hr','Heart Rate (bpm)','#6a5cff', r=>r.heartRate);
                     buildChart('chart-spo2','SpO₂ (%)','#19c6a8', r=>r.spo2);
+                    // BMI trend chart
+                    buildChart('chart-bmi','BMI','#6a5cff', r=>r.bmi);
                 } catch (e) { console.warn('Chart init failed', e); }
             })();
         </script>
