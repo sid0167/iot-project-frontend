@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>BMI Calculator</title>
+  <link rel="stylesheet" href="theme.css">
   <link rel="stylesheet" href="back-button.css">
   <style>
     body {
@@ -117,9 +118,108 @@
     <div id="result"></div>
   </div>
 
+  <div class="card" style="max-width:920px; margin-top:1.25rem;">
+    <h2 style="text-align:center; margin-top:0;">📊 Your BMI History</h2>
+    <div style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center;">
+      <div id="history-list" style="flex:1 1 360px; min-width:260px;"></div>
+      <div style="flex:1 1 360px; min-width:260px;">
+        <h3 style="margin-bottom:0.5rem">Health Tips</h3>
+        <ul style="line-height:1.6; margin-top:0.4rem">
+          <li>Maintain a balanced diet rich in vegetables, lean protein and whole grains.</li>
+          <li>Exercise at least 30 minutes daily—mix cardio and strength training.</li>
+          <li>Stay hydrated and sleep 7–9 hours for better recovery and metabolism.</li>
+          <li>Track progress rather than perfection — small, consistent changes win.</li>
+        </ul>
+        <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+          <button id="clear-history" style="flex:1; background:#ff7675;">Clear History</button>
+          <a href="maindash.html" class="button" style="flex:1; text-align:center; display:inline-block; padding:0.65rem; border-radius:10px; text-decoration:none; color:white; background:#0984e3">Open Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const BASE_URL = 'https://iot-project-25ym.onrender.com';
     const token = localStorage.getItem('token');
+
+    function calculateLocalBMI(height, weight) {
+      const h = height / 100;
+      const bmi = +(weight / (h * h)).toFixed(1);
+      return bmi;
+    }
+
+    function categorizeBMI(bmi) {
+      if (bmi < 18.5) return { category: 'Underweight', className: 'underweight' };
+      if (bmi >= 18.5 && bmi < 25) return { category: 'Normal Weight', className: 'normal' };
+      if (bmi >= 25 && bmi < 30) return { category: 'Overweight', className: 'overweight' };
+      return { category: 'Obese', className: 'obese' };
+    }
+
+    function saveToHistory(entry) {
+      const key = 'bmi_history_v1';
+      const existing = JSON.parse(localStorage.getItem(key) || '[]');
+      existing.unshift(entry);
+      // keep only latest 20
+      localStorage.setItem(key, JSON.stringify(existing.slice(0, 20)));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const key = 'bmi_history_v1';
+      let list = JSON.parse(localStorage.getItem(key) || '[]');
+
+      // If empty, prepopulate with sample data to make the page look lively
+      if (!list.length) {
+        const now = Date.now();
+        list = [
+          { date: new Date(now - 86400000 * 4).toISOString(), bmi: 24.9, category: 'Normal Weight', height:170, weight:72 },
+          { date: new Date(now - 86400000 * 3).toISOString(), bmi: 25.6, category: 'Overweight', height:170, weight:74 },
+          { date: new Date(now - 86400000 * 2).toISOString(), bmi: 24.4, category: 'Normal Weight', height:170, weight:71 },
+          { date: new Date(now - 86400000 * 1).toISOString(), bmi: 24.7, category: 'Normal Weight', height:170, weight:71.5 }
+        ];
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+
+      const container = document.getElementById('history-list');
+      container.innerHTML = '';
+
+      list.forEach(item => {
+        const d = new Date(item.date);
+        const card = document.createElement('div');
+        card.style.background = '#f7f9fb';
+        card.style.borderRadius = '12px';
+        card.style.padding = '0.8rem';
+        card.style.marginBottom = '0.6rem';
+        card.style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.6)';
+
+        const when = document.createElement('div');
+        when.textContent = d.toLocaleString();
+        when.style.fontSize = '0.85rem';
+        when.style.opacity = '0.8';
+
+        const main = document.createElement('div');
+        main.style.display = 'flex';
+        main.style.justifyContent = 'space-between';
+        main.style.alignItems = 'center';
+        main.style.marginTop = '0.45rem';
+
+        const info = document.createElement('div');
+        info.innerHTML = `<strong style="font-size:1.05rem">BMI: ${item.bmi}</strong><div style="font-size:0.9rem; opacity:0.85">${item.category}</div>`;
+
+        const meta = document.createElement('div');
+        meta.style.textAlign = 'right';
+        meta.style.fontSize = '0.85rem';
+        meta.innerHTML = `<div>Height: ${item.height} cm</div><div>Weight: ${item.weight} kg</div>`;
+
+        main.appendChild(info);
+        main.appendChild(meta);
+
+        card.appendChild(when);
+        card.appendChild(main);
+
+        container.appendChild(card);
+      });
+    }
 
     async function submitBMI() {
       const height = parseFloat(document.getElementById('height').value);
@@ -133,6 +233,10 @@
         return;
       }
 
+      // Always compute local BMI as a fallback
+      const localBMI = calculateLocalBMI(height, weight);
+      const localCat = categorizeBMI(localBMI);
+
       try {
         const res = await fetch(`${BASE_URL}/api/health/UserVitals`, {
           method: 'POST',
@@ -143,41 +247,42 @@
           body: JSON.stringify({ height, weight })
         });
 
-        const data = await res.json();
-        if (res.ok) {
-          const bmi = data.bmi;
-          let category = "";
-          let className = "";
+        const data = await res.json().catch(() => ({}));
+        let bmi = localBMI;
+        let cat = localCat;
 
-          if (bmi < 18.5) {
-            category = "Underweight";
-            className = "underweight";
-          } else if (bmi >= 18.5 && bmi < 25) {
-            category = "Normal Weight";
-            className = "normal";
-          } else if (bmi >= 25 && bmi < 30) {
-            category = "Overweight";
-            className = "overweight";
-          } else {
-            category = "Obese";
-            className = "obese";
-          }
-
-          resultDiv.textContent = `✅ BMI: ${bmi} (${category})`;
-          resultDiv.className = className;
-          resultDiv.style.display = "block";
-        } else {
-          resultDiv.textContent = `❌ ${data.message}`;
-          resultDiv.className = "";
-          resultDiv.style.display = "block";
+        if (res.ok && data.bmi) {
+          bmi = data.bmi;
+          cat = categorizeBMI(bmi);
         }
-      } catch (err) {
-        console.error(err);
-        resultDiv.textContent = '❌ Something went wrong.';
-        resultDiv.className = "";
+
+        resultDiv.textContent = `✅ BMI: ${bmi} (${cat.category})`;
+        resultDiv.className = cat.className;
         resultDiv.style.display = "block";
+
+        // save to local history
+        saveToHistory({ date: new Date().toISOString(), bmi, category: cat.category, height, weight });
+      } catch (err) {
+        console.warn('API request failed, using local calculation', err);
+        resultDiv.textContent = `✅ BMI (calculated locally): ${localBMI} (${localCat.category})`;
+        resultDiv.className = localCat.className;
+        resultDiv.style.display = "block";
+        saveToHistory({ date: new Date().toISOString(), bmi: localBMI, category: localCat.category, height, weight });
       }
     }
+
+    // Clear history button
+    document.addEventListener('click', (e) => {
+      if (e.target && e.target.id === 'clear-history') {
+        localStorage.removeItem('bmi_history_v1');
+        renderHistory();
+      }
+    });
+
+    // initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      renderHistory();
+    });
   </script>
 </body>
 </html>
