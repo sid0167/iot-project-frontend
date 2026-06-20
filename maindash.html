@@ -37,6 +37,32 @@
         </nav>
     </header>
 
+        <!-- Dashboard Summary (frontend-only, uses data.js mock records) -->
+        <main class="dashboard container" style="padding:1.5rem 2rem;">
+            <h2 style="color:#fff; margin:0 0 1rem;">Health Dashboard</h2>
+
+            <div id="metrics" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:stretch; margin-bottom:1.25rem">
+                <!-- metric cards inserted by script -->
+            </div>
+
+            <div id="prediction" style="background:linear-gradient(90deg,#58a6ff,#2db7f5); padding:1.25rem; border-radius:12px; color:#fff; box-shadow:0 8px 30px rgba(0,0,0,0.2); margin-bottom:1.25rem;">
+                <h3 style="text-align:center; margin:0 0 0.5rem;">Health Prediction</h3>
+                <p id="prediction-text" style="text-align:center; margin:0; opacity:0.95">Loading insights from local data...</p>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1rem;">
+                <div style="background:#fff; padding:1rem; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.08)">
+                    <canvas id="chart-temp" width="400" height="220"></canvas>
+                </div>
+                <div style="background:#fff; padding:1rem; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.08)">
+                    <canvas id="chart-hr" width="400" height="220"></canvas>
+                </div>
+                <div style="background:#fff; padding:1rem; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.08)">
+                    <canvas id="chart-spo2" width="400" height="220"></canvas>
+                </div>
+            </div>
+        </main>
+
     <section class="home" id="home">
         <div class="home-container container grid">
             <div class="home-data">
@@ -378,7 +404,99 @@
         <p class="footer-copy">&#169; <span>sid0167</span>. All rights reserved</p>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script src="maindash.js"></script>
+        <script src="data.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            // Frontend-only dashboard rendering using window.healthRecords (from data.js)
+            const records = (window.healthRecords || []).slice().sort((a,b)=> new Date(a.date) - new Date(b.date));
+
+            function latestRecord() {
+                if (!records.length) return null;
+                return records[records.length - 1];
+            }
+
+            function createMetricCard(title, value, unit, bg) {
+                const card = document.createElement('div');
+                card.style.flex = '1 1 280px';
+                card.style.background = bg;
+                card.style.color = '#fff';
+                card.style.borderRadius = '12px';
+                card.style.padding = '1rem 1.2rem';
+                card.style.boxShadow = '0 8px 30px rgba(0,0,0,0.12)';
+
+                card.innerHTML = `<div style="opacity:0.95; font-weight:600;">${title}</div><div style="font-size:1.6rem; font-weight:700; margin-top:0.4rem">${value} <span style="font-size:0.8rem; font-weight:600">${unit}</span></div>`;
+                return card;
+            }
+
+            function renderMetrics() {
+                const container = document.getElementById('metrics');
+                container.innerHTML = '';
+                const latest = latestRecord() || { temperature: 36.7, heartRate: 76, spo2: 97 };
+
+                container.appendChild(createMetricCard('Temperature', latest.temperature || '—', '°C', 'linear-gradient(90deg,#ff7a7a,#ff4d4d)'));
+                container.appendChild(createMetricCard('Heart Rate', latest.heartRate || '—', 'bpm', 'linear-gradient(90deg,#4da6ff,#6a5cff)'));
+                container.appendChild(createMetricCard('SpO₂', latest.spo2 || '—', '%', 'linear-gradient(90deg,#15c39a,#06b0a3)'));
+            }
+
+            function healthPrediction() {
+                if (!records.length) return 'No data available to predict. Add records from the BMI page or wait for mock data.';
+                const last = latestRecord();
+                const avgTemp = (records.reduce((s,r)=>s + (r.temperature||0),0)/records.length).toFixed(1);
+                const avgHr = Math.round(records.reduce((s,r)=>s + (r.heartRate||0),0)/records.length);
+                const avgSp = Math.round(records.reduce((s,r)=>s + (r.spo2||0),0)/records.length);
+
+                const tempStatus = last.temperature >= 37.5 ? 'Fever' : 'Normal';
+                const hrStatus = last.heartRate > 100 ? 'High' : (last.heartRate < 60 ? 'Low' : 'Normal');
+                const spStatus = last.spo2 < 95 ? 'Low' : 'Normal';
+
+                return `Temperature Status: ${tempStatus} (avg ${avgTemp} °C)\nHeart Rate Status: ${hrStatus} (avg ${avgHr} bpm)\nSpO₂ Status: ${spStatus} (avg ${avgSp} %)`;
+            }
+
+            function renderPrediction() {
+                const p = document.getElementById('prediction-text');
+                p.textContent = healthPrediction();
+            }
+
+            function buildChart(ctxId, label, color, accessor) {
+                const ctx = document.getElementById(ctxId).getContext('2d');
+                const labels = records.map(r => new Date(r.date).toLocaleDateString());
+                const data = records.map(accessor);
+
+                return new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label,
+                            data,
+                            borderColor: color,
+                            backgroundColor: color + '33',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: false } }
+                    }
+                });
+            }
+
+            // initialize dashboard
+            (function initDashboard(){
+                renderMetrics();
+                renderPrediction();
+                // charts (guard if records empty)
+                try {
+                    buildChart('chart-temp','Temperature (°C)','#ff6b6b', r=>r.temperature);
+                    buildChart('chart-hr','Heart Rate (bpm)','#6a5cff', r=>r.heartRate);
+                    buildChart('chart-spo2','SpO₂ (%)','#19c6a8', r=>r.spo2);
+                } catch (e) { console.warn('Chart init failed', e); }
+            })();
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+        <script src="maindash.js"></script>
 </body>
 </html>
