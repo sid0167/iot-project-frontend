@@ -412,11 +412,18 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             // Frontend-only dashboard rendering using window.healthRecords (from data.js)
-            const records = (window.healthRecords || []).slice().sort((a,b)=> new Date(a.date) - new Date(b.date));
+            function loadRecords() {
+                const base = (window.healthRecords || []).slice();
+                const local = JSON.parse(localStorage.getItem('bmi_history_v1') || '[]').map(r => ({ date: r.date, bmi: r.bmi, temperature: r.temperature || null, heartRate: r.height ? null : r.heartRate || null, spo2: null }));
+                const combined = base.concat(local).sort((a,b) => new Date(a.date) - new Date(b.date));
+                window.dashboardRecords = combined;
+                return combined;
+            }
 
             function latestRecord() {
-                if (!records.length) return null;
-                return records[records.length - 1];
+                const recs = window.dashboardRecords || loadRecords();
+                if (!recs.length) return null;
+                return recs[recs.length - 1];
             }
 
             function createMetricCard(title, value, unit, bg) {
@@ -463,8 +470,9 @@
 
             function buildChart(ctxId, label, color, accessor) {
                 const ctx = document.getElementById(ctxId).getContext('2d');
-                const labels = records.map(r => new Date(r.date).toLocaleDateString());
-                const data = records.map(accessor);
+                const recs = window.dashboardRecords || loadRecords();
+                const labels = recs.map(r => new Date(r.date).toLocaleDateString());
+                const data = recs.map(accessor);
 
                 return new Chart(ctx, {
                     type: 'line',
@@ -488,18 +496,49 @@
                 });
             }
 
-            // initialize dashboard
-            (function initDashboard(){
+            // refresh dashboard UI (metrics, prediction, charts)
+            function refreshDashboard() {
+                loadRecords();
                 renderMetrics();
                 renderPrediction();
-                // charts (guard if records empty)
+                // update charts if present
+                if (window.dashboardCharts) {
+                    Object.keys(window.dashboardCharts).forEach(id => {
+                        try {
+                            const chart = window.dashboardCharts[id];
+                            const recs = window.dashboardRecords || loadRecords();
+                            chart.data.labels = recs.map(r => new Date(r.date).toLocaleDateString());
+                            // detect dataset accessor by label
+                            const label = chart.data.datasets[0].label.toLowerCase();
+                            if (label.includes('temp')) chart.data.datasets[0].data = recs.map(r => r.temperature);
+                            else if (label.includes('heart') || label.includes('bpm')) chart.data.datasets[0].data = recs.map(r => r.heartRate);
+                            else if (label.includes('spo')) chart.data.datasets[0].data = recs.map(r => r.spo2);
+                            else if (label.includes('bmi')) chart.data.datasets[0].data = recs.map(r => r.bmi);
+                            chart.update();
+                        } catch (e) { console.warn('Failed updating chart', id, e); }
+                    });
+                }
+            }
+
+            // initialize dashboard
+            (function initDashboard(){
+                loadRecords();
+                renderMetrics();
+                renderPrediction();
+                window.dashboardCharts = {};
                 try {
-                    buildChart('chart-temp','Temperature (°C)','#ff6b6b', r=>r.temperature);
-                    buildChart('chart-hr','Heart Rate (bpm)','#6a5cff', r=>r.heartRate);
-                    buildChart('chart-spo2','SpO₂ (%)','#19c6a8', r=>r.spo2);
-                    // BMI trend chart
-                    buildChart('chart-bmi','BMI','#6a5cff', r=>r.bmi);
+                    window.dashboardCharts['chart-temp'] = buildChart('chart-temp','Temperature (°C)','#ff6b6b', r=>r.temperature);
+                    window.dashboardCharts['chart-hr'] = buildChart('chart-hr','Heart Rate (bpm)','#6a5cff', r=>r.heartRate);
+                    window.dashboardCharts['chart-spo2'] = buildChart('chart-spo2','SpO₂ (%)','#19c6a8', r=>r.spo2);
+                    window.dashboardCharts['chart-bmi'] = buildChart('chart-bmi','BMI','#6a5cff', r=>r.bmi);
                 } catch (e) { console.warn('Chart init failed', e); }
+
+                // Listen for localStorage changes (synchronizes across tabs)
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'bmi_history_v1') {
+                        refreshDashboard();
+                    }
+                });
             })();
         </script>
         <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
