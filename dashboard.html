@@ -528,13 +528,7 @@
     }
 
     function openBMI() {
-      const token = localStorage.getItem("token");
-      if (token) {
-        const url = `https://iot-project-25ym.onrender.com/bmi?token=${token}`;
-        window.location.href = url;
-      } else {
-        alert("You're not logged in!");
-      }
+      window.location.href = 'bmi.html';
     }
   </script>
 </body>

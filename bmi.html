@@ -335,9 +335,6 @@
   </div>
 
   <script>
-    const BASE_URL = 'https://iot-project-25ym.onrender.com';
-    const token = localStorage.getItem('token');
-
     function calculateLocalBMI(height, weight) {
       const h = height / 100;
       const bmi = +(weight / (h * h)).toFixed(1);
@@ -456,38 +453,12 @@
       const localBMI = calculateLocalBMI(height, weight);
       const localCat = categorizeBMI(localBMI);
 
-      try {
-        const res = await fetch(`${BASE_URL}/api/health/UserVitals`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ height, weight })
-        });
-
-        const data = await res.json().catch(() => ({}));
-        let bmi = localBMI;
-        let cat = localCat;
-
-        if (res.ok && data.bmi) {
-          bmi = data.bmi;
-          cat = categorizeBMI(bmi);
-        }
-
-        resultDiv.textContent = `✅ BMI: ${bmi} (${cat.category})`;
-        resultDiv.className = cat.className;
-        resultDiv.style.display = "block";
-
-        // save to local history
-        saveToHistory({ date: new Date().toISOString(), bmi, category: cat.category, height, weight });
-      } catch (err) {
-        console.warn('API request failed, using local calculation', err);
-        resultDiv.textContent = `✅ BMI (calculated locally): ${localBMI} (${localCat.category})`;
-        resultDiv.className = localCat.className;
-        resultDiv.style.display = "block";
-        saveToHistory({ date: new Date().toISOString(), bmi: localBMI, category: localCat.category, height, weight });
-      }
+      const bmi = localBMI;
+      const cat = localCat;
+      resultDiv.textContent = `✅ BMI: ${bmi} (${cat.category})`;
+      resultDiv.className = cat.className;
+      resultDiv.style.display = "block";
+      saveToHistory({ date: new Date().toISOString(), bmi, category: cat.category, height, weight });
     }
 
     // Clear history button
