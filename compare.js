@@ -77,10 +77,27 @@ if (ball && typeof gsap !== 'undefined' && typeof Draggable !== 'undefined' && t
 
 // --- Simple health-records viewer & comparator (uses data.js -> window.healthRecords)
 (function () {
-  if (typeof window === 'undefined' || !Array.isArray(window.healthRecords)) return;
-  
+  if (typeof window === 'undefined') return;
+
+  function getSourceRecords() {
+    // Prefer current user's personal records when available
+    try {
+      if (typeof getPersonalRecords === 'function') {
+        const personal = getPersonalRecords();
+        if (Array.isArray(personal) && personal.length) return personal.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+      }
+    } catch (e) { /* ignore */ }
+
+    // Fallback to global mock records
+    if (Array.isArray(window.healthRecords) && window.healthRecords.length) {
+      return window.healthRecords.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+    }
+
+    return [];
+  }
+
   function initPanel() {
-    const records = window.healthRecords.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+    const records = getSourceRecords();
 
     const panel = document.createElement('div');
     panel.style.position = 'fixed';
@@ -321,12 +338,16 @@ if (ball && typeof gsap !== 'undefined' && typeof Draggable !== 'undefined' && t
   function doRender() {
     const target = document.getElementById('compare-area');
     if (!target) return;
-    if (typeof window === 'undefined' || !Array.isArray(window.healthRecords) || window.healthRecords.length < 2) {
+    const records = (function(){
+      // Use personal records first, then fall back to global mock data
+      try { if (typeof getPersonalRecords === 'function') { const p = getPersonalRecords(); if (Array.isArray(p) && p.length) return p.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)); } } catch(e){}
+      if (Array.isArray(window.healthRecords)) return window.healthRecords.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+      return [];
+    })();
+    if (records.length < 2) {
       target.innerHTML = '<p style="color:#666">Not enough records to compare.</p>';
       return;
     }
-
-    const records = window.healthRecords.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
     buildRecordSelectors(records);
     buildMetricSelectors();
     renderComparison();
