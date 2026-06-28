@@ -259,6 +259,25 @@ body {
   padding-right: 12px;
 }
 
+.metric-diff {
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: #334155;
+  background: rgba(132, 78, 222, 0.05);
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+.metric-diff.improved {
+  color: #0f766e;
+  background: rgba(16, 118, 110, 0.1);
+}
+
+.metric-diff.declined {
+  color: #b91c1c;
+  background: rgba(220, 38, 38, 0.08);
+}
+
 .metric-values > div:last-child {
   padding-left: 12px;
 }
