@@ -11,194 +11,307 @@
     body {
       margin: 0;
       font-family: 'Ubuntu', sans-serif;
-      background: linear-gradient(135deg, #eef2f3, #dfe6e9);
-      color: #333;
+      background: linear-gradient(180deg, #f3f7fb 0%, #eef3f8 55%, #ffffff 100%);
+      color: #1f2937;
+      min-height: 100vh;
     }
 
     /* Navbar */
     .navbar {
-      background: #2d3436;
-      color: white;
+      background: rgba(18, 67, 133, 0.96);
+      color: #fff;
       padding: 1rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
     .navbar h2 {
       margin: 0;
+      font-size: 1.3rem;
+      letter-spacing: 0.02em;
     }
 
     .nav-buttons {
       display: flex;
-      gap: 10px;
+      gap: 0.75rem;
       flex-wrap: wrap;
     }
 
     .btn {
-      background: #6c5ce7;
-      color: white;
-      padding: 8px 16px;
+      background: #4f7fff;
+      color: #fff;
+      padding: 0.85rem 1.25rem;
       border: none;
-      border-radius: 8px;
-      font-weight: bold;
+      border-radius: 999px;
+      font-weight: 700;
       cursor: pointer;
-      transition: 0.3s;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      box-shadow: 0 12px 24px rgba(79, 127, 255, 0.18);
     }
 
     .btn:hover {
-      background: #5a4ae3;
       transform: translateY(-2px);
-      box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
+      background: #3a62f8;
+      box-shadow: 0 16px 28px rgba(79, 127, 255, 0.22);
     }
 
     .btn-danger {
-      background: #d63031;
+      background: #ef4444;
+      box-shadow: 0 12px 24px rgba(239, 68, 68, 0.24);
     }
 
     .btn-danger:hover {
-      background: #c0392b;
+      background: #dc2626;
     }
 
-    /* Stats Row */
-    .stats {
+    .btn.secondary {
+      background: #10b981;
+      box-shadow: 0 12px 24px rgba(16, 185, 129, 0.18);
+    }
+
+    .page-heading {
+      max-width: 1200px;
+      margin: 2rem auto 0;
+      padding: 0 2rem;
       display: flex;
-      justify-content: space-around;
-      align-items: stretch;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .page-heading h1 {
+      margin: 0;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+      color: #0f172a;
+    }
+
+    .page-heading p {
+      margin: 0.5rem 0 0;
+      color: #475569;
+      max-width: 720px;
+      line-height: 1.6;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(240px, 1fr));
+      gap: 1.5rem;
       margin: 2rem auto;
       max-width: 1200px;
-      gap: 20px;
-      flex-wrap: nowrap;
+      padding: 0 2rem;
     }
 
     .stat-card {
-      color: white;
+      color: #fff;
       padding: 2rem;
-      border-radius: 20px;
-      flex: 1;
-      text-align: center;
-      transition: 0.3s;
-      font-weight: bold;
-      min-width: 250px;
+      border-radius: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 230px;
+      box-shadow: 0 30px 55px rgba(15, 23, 42, 0.1);
     }
 
     .stat-card .icon {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-      animation: pulse 2s infinite;
+      font-size: 2.8rem;
+      margin-bottom: 1rem;
+      opacity: 0.95;
     }
 
     .stat-card h3 {
-      margin: 0.5rem 0;
-      font-size: 1.2rem;
-      opacity: 0.9;
+      margin: 0;
+      font-size: 1.1rem;
+      opacity: 0.92;
+      letter-spacing: 0.01em;
     }
 
     .stat-card p {
-      font-size: 2rem;
-      font-weight: 700;
-      margin: 0;
+      font-size: 2.75rem;
+      margin: 0.75rem 0 0;
+      letter-spacing: 0.02em;
     }
 
-    /* Gradient backgrounds */
-    .temp {
-      background: linear-gradient(135deg, #ff7675, #d63031);
-    }
-    .heart {
-      background: linear-gradient(135deg, #0984e3, #6c5ce7);
-    }
-    .spo2 {
-      background: linear-gradient(135deg, #00b894, #00cec9);
+    .stat-card.temp {
+      background: linear-gradient(135deg, #ff7e7e, #f34b71);
     }
 
-    .stat-card:hover {
-      transform: translateY(-5px) scale(1.02);
-      box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+    .stat-card.heart {
+      background: linear-gradient(135deg, #5b7dff, #7a58ff);
     }
 
-    @keyframes pulse {
-      0% { transform: scale(1); opacity: 0.8; }
-      50% { transform: scale(1.2); opacity: 1; }
-      100% { transform: scale(1); opacity: 0.8; }
+    .stat-card.spo2 {
+      background: linear-gradient(135deg, #22c55e, #14b8a6);
     }
 
-    /* Prediction Section */
     .prediction {
       margin: 2rem auto;
       padding: 2rem;
-      border-radius: 20px;
-      background: linear-gradient(135deg, #74b9ff, #0984e3);
-      color: white;
-      max-width: 800px;
+      border-radius: 32px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.96), rgba(16, 185, 129, 0.96));
+      color: #fff;
+      max-width: 1200px;
+      box-shadow: 0 28px 60px rgba(15, 23, 42, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       text-align: center;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-      animation: fadeIn 0.8s ease-in-out;
     }
 
     .prediction h3 {
+      margin: 0 0 1rem;
+      font-size: 1.35rem;
+      letter-spacing: 0.03em;
+    }
+
+    .prediction p {
+      margin: 0.55rem 0;
+      font-size: 1rem;
+      opacity: 0.95;
+      line-height: 1.7;
+    }
+
+    .personal-card {
+      margin: 2rem auto;
+      max-width: 1200px;
+      padding: 2rem;
+      background: #ffffff;
+      border-radius: 28px;
+      box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .personal-card .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .personal-card h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: #0f172a;
+    }
+
+    .personal-card p {
+      margin: 0.75rem 0 0;
+      color: #475569;
+      line-height: 1.7;
+    }
+
+    #personalSummaryText {
+      margin: 1.25rem 0 0;
+      color: #475569;
+      font-size: 0.98rem;
+    }
+
+    .dashboard-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .chart-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
       margin-bottom: 1rem;
     }
 
-    /* Charts Grid */
+    .chart-meta h4 {
+      margin: 0;
+      font-size: 1rem;
+      color: #111827;
+      letter-spacing: 0.01em;
+    }
+
+    .chart-meta p {
+      margin: 0;
+      color: #64748b;
+      font-size: 0.92rem;
+    }
+
+    .mini-stat {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 1.15rem 1.25rem;
+      color: #0f172a;
+      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .mini-stat strong {
+      display: block;
+      font-size: 1.35rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .mini-stat .muted {
+      color: #64748b;
+      font-size: 0.95rem;
+      margin: 0;
+    }
+
     .charts {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-      margin: 2rem auto;
+      grid-template-columns: repeat(3, minmax(280px, 1fr));
+      gap: 1.75rem;
+      margin: 0 auto;
       max-width: 1200px;
+      padding: 0 2rem;
     }
 
     .chart-card {
-      background: white;
-      border-radius: 20px;
+      background: #fff;
+      border-radius: 26px;
       padding: 1.5rem;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-      transition: 0.3s;
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .chart-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+      transform: translateY(-4px);
+      box-shadow: 0 24px 44px rgba(15, 23, 42, 0.12);
     }
 
-    canvas {
-      width: 100% !important;
-      height: 300px !important;
-    }
-
-    /* Reset Button */
     #resetBtn {
-      margin: 1rem auto;
+      margin: 1.75rem auto 3rem;
       display: block;
-      padding: 0.8rem 1.5rem;
-      background: #d63031;
+      padding: 0.95rem 1.75rem;
+      background: #ef4444;
       border: none;
-      border-radius: 8px;
+      border-radius: 999px;
       color: white;
-      font-weight: bold;
+      font-weight: 700;
       cursor: pointer;
-      transition: 0.3s;
+      transition: transform 0.2s ease, background 0.2s ease;
     }
 
     #resetBtn:hover {
-      background: #c0392b;
-      transform: scale(1.05);
+      background: #dc2626;
+      transform: translateY(-2px);
     }
 
-    /* Animations */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    @media (max-width: 1080px) {
+      .charts { grid-template-columns: repeat(2, minmax(280px, 1fr)); }
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
-      .stats {
-        flex-direction: column;
-        align-items: center;
-      }
+      .stats, .charts { grid-template-columns: 1fr; }
+      .navbar { padding: 1rem 1.25rem; }
+      .page-heading { padding: 0 1.25rem; }
+      .personal-card { padding: 1.75rem 1.25rem; }
     }
   </style>
 </head>
@@ -221,6 +334,17 @@
       <button class="btn" onclick="location.href='/gemini-assistant.html'">AI Assistant</button>
       <button class="btn" onclick="location.href='/user-data.html'">My IoT Data</button>
       <button class="btn" onclick="openBMI()">BMI Calculator</button>
+    </div>
+  </div>
+
+  <div class="page-heading">
+    <div>
+      <h1>Connected Health Overview</h1>
+      <p>Track shared general health trends and your own device readings in one polished dashboard. Your personal data remains separate and secure.</p>
+    </div>
+    <div class="dashboard-actions">
+      <button class="btn secondary" onclick="location.href='/user-data.html'">My IoT Data</button>
+      <button class="btn" onclick="openBMI()">Open BMI Calculator</button>
     </div>
   </div>
 
@@ -252,13 +376,13 @@
     <p><strong>Heart Rate Status:</strong> <span id="heartStatus">--</span></p>
   </div>
 
-  <div class="card" style="margin: 2rem auto; max-width: 1200px;">
+  <div class="personal-card">
     <div class="section-header">
       <div>
         <h3>Your personal IoT readings</h3>
         <p class="muted">This stays separate from the general history so each user can see only their own generated data.</p>
       </div>
-      <a class="btn secondary" href="user-data.html">Open My Data</a>
+      <button class="btn secondary" onclick="location.href='/user-data.html'">Open My Data</button>
     </div>
     <p id="personalSummaryText" class="muted">No personal readings yet.</p>
     <div id="personalQuickStats" class="grid-2 mt-2"></div>
@@ -266,9 +390,27 @@
 
   <!-- Charts -->
   <div class="charts">
-    <div class="chart-card"><canvas id="tempChart"></canvas></div>
-    <div class="chart-card"><canvas id="heartChart"></canvas></div>
-    <div class="chart-card"><canvas id="spo2Chart"></canvas></div>
+    <div class="chart-card">
+      <div class="chart-meta">
+        <h4>Temperature Trend</h4>
+        <p class="muted">General history overview</p>
+      </div>
+      <canvas id="tempChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-meta">
+        <h4>Heart Rate Trend</h4>
+        <p class="muted">General history overview</p>
+      </div>
+      <canvas id="heartChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-meta">
+        <h4>SpO₂ Trend</h4>
+        <p class="muted">General history overview</p>
+      </div>
+      <canvas id="spo2Chart"></canvas>
+    </div>
   </div>
 
   <button id="resetBtn" onclick="resetCharts()">Reset Charts</button>
