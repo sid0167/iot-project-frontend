@@ -102,7 +102,7 @@
 
     .stats {
       display: grid;
-      grid-template-columns: repeat(3, minmax(240px, 1fr));
+      grid-template-columns: repeat(4, minmax(240px, 1fr));
       gap: 1.5rem;
       margin: 2rem auto;
       max-width: 1200px;
@@ -367,6 +367,11 @@
       <h3>SpO₂</h3>
       <p id="spo2Value">-- %</p>
     </div>
+    <div class="stat-card bmi">
+      <div class="icon">⚖️</div>
+      <h3>BMI</h3>
+      <p id="bmiValue">--</p>
+    </div>
   </div>
 
   <!-- Prediction -->
@@ -444,7 +449,13 @@
       data: { labels, datasets: [{ label: 'SpO₂ (%)', data: spo2Data, borderColor: '#00cec9', backgroundColor: 'rgba(0,206,201,0.2)', fill: true, tension: 0.3 }] }
     });
 
-    function populateFromRecords(records) {
+    function latestRecordWithValue(records, key) {
+      return records
+        .filter((r) => r[key] != null)
+        .sort((a,b)=> new Date(b.date) - new Date(a.date))[0] || null;
+    }
+
+    function populateFromRecords(records, bmiRecords = []) {
       // sort chronological for charts (oldest first)
       const sorted = records.slice().sort((a,b)=> new Date(a.date) - new Date(b.date));
       labels.length = 0; tempData.length = 0; heartData.length = 0; spo2Data.length = 0;
@@ -456,29 +467,31 @@
       });
       tempChart.update(); heartChart.update(); spo2Chart.update();
 
-      // latest record
-      const latest = records.slice().sort((a,b)=> new Date(b.date)-new Date(a.date))[0];
-      if (latest) {
-        document.getElementById('tempValue').innerText = `${latest.temperature} °C`;
-        document.getElementById('heartValue').innerText = `${latest.heartRate} bpm`;
-        document.getElementById('spo2Value').innerText = `${latest.spo2} %`;
+      // latest value for each health metric
+      const latestTemp = latestRecordWithValue(records, 'temperature');
+      const latestHeart = latestRecordWithValue(records, 'heartRate');
+      const latestSpo2 = latestRecordWithValue(records, 'spo2');
+      const latestBmiHistory = latestRecordWithValue(bmiRecords, 'bmi');
+      const latestBmi = latestBmiHistory || latestRecordWithValue(records, 'bmi');
 
-        // Health prediction simple rules
-        function statusForTemp(t){ if (t>37.5) return 'High'; if (t<36) return 'Low'; return 'Normal'; }
-        function statusForHR(h){ if (h>90) return 'High'; if (h<60) return 'Low'; return 'Normal'; }
-        function statusForSpO2(s){ if (s<95) return 'Low'; return 'Normal'; }
+      document.getElementById('tempValue').innerText = latestTemp ? `${latestTemp.temperature} °C` : '-- °C';
+      document.getElementById('heartValue').innerText = latestHeart ? `${latestHeart.heartRate} bpm` : '-- bpm';
+      document.getElementById('spo2Value').innerText = latestSpo2 ? `${latestSpo2.spo2} %` : '-- %';
+      document.getElementById('bmiValue').innerText = latestBmi ? `${latestBmi.bmi}` : '--';
 
-        document.getElementById('tempStatus').innerText = statusForTemp(latest.temperature);
-        document.getElementById('heartStatus').innerText = statusForHR(latest.heartRate);
-        // add spo2 status element or re-use existing
-        const spo2El = document.getElementById('spo2Value');
-        // also update prediction area text
-        const predTemp = document.getElementById('tempStatus');
-        const predHeart = document.getElementById('heartStatus');
-        // We will show SpO2 status in prediction section by appending
+      if (latestTemp) {
+        const statusForTemp = (t) => t > 37.5 ? 'High' : t < 36 ? 'Low' : 'Normal';
+        document.getElementById('tempStatus').innerText = statusForTemp(latestTemp.temperature);
+      }
+      if (latestHeart) {
+        const statusForHR = (h) => h > 90 ? 'High' : h < 60 ? 'Low' : 'Normal';
+        document.getElementById('heartStatus').innerText = statusForHR(latestHeart.heartRate);
+      }
+      if (latestSpo2) {
+        const statusForSpO2 = (s) => s < 95 ? 'Low' : 'Normal';
         let spo2StatusEl = document.getElementById('spo2Status');
         if(!spo2StatusEl){ spo2StatusEl = document.createElement('div'); spo2StatusEl.id='spo2Status'; document.querySelector('.prediction').appendChild(spo2StatusEl); }
-        spo2StatusEl.innerText = `SpO₂ Status: ${statusForSpO2(latest.spo2)}`;
+        spo2StatusEl.innerText = `SpO₂ Status: ${statusForSpO2(latestSpo2.spo2)}`;
       }
     }
 
@@ -504,13 +517,36 @@
     }
 
     // initialize from general data and personal data
+    function getBmiHistoryRecords() {
+      const history = JSON.parse(localStorage.getItem('bmi_history_v1') || '[]');
+      return history
+        .map((r) => ({
+          date: r.date || new Date().toISOString(),
+          temperature: r.temperature != null ? Number(r.temperature) : null,
+          heartRate: r.heartRate != null ? Number(r.heartRate) : null,
+          spo2: r.spo2 != null ? Number(r.spo2) : null,
+          bmi: r.bmi != null ? Number(r.bmi) : null,
+          source: 'bmi'
+        }))
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+    }
+
+    function mergeDashboardRecords(records) {
+      const bmiRecords = getBmiHistoryRecords();
+      const combined = [...records, ...bmiRecords];
+      return combined.sort((a, b) => new Date(a.date) - new Date(b.date));
+    }
+
     const generalRecords = getGeneralRecords();
-    if (generalRecords.length) {
-      populateFromRecords(generalRecords);
+    const bmiHistoryRecords = getBmiHistoryRecords();
+    const dashboardRecords = mergeDashboardRecords(generalRecords);
+    if (dashboardRecords.length) {
+      populateFromRecords(dashboardRecords, bmiHistoryRecords);
     } else {
       document.getElementById('tempValue').innerText = '-- °C';
       document.getElementById('heartValue').innerText = '-- bpm';
       document.getElementById('spo2Value').innerText = '-- %';
+      document.getElementById('bmiValue').innerText = '--';
       document.getElementById('tempStatus').innerText = 'No data';
       document.getElementById('heartStatus').innerText = 'No data';
     }
