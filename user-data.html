@@ -22,11 +22,11 @@
         <div class="section-header">
           <div>
             <h3>Device connection</h3>
-            <p class="muted">Tap the button to pull the latest reading from your connected IoT device.</p>
+            <p class="muted">Tap the button to pull the latest reading from your connected IoT device. Data will auto-sync every 2 minutes.</p>
           </div>
           <button class="btn secondary" onclick="recordDeviceReading()">Connect Device</button>
         </div>
-        <div id="deviceStatus" class="muted" style="padding:0.85rem 1rem; border-radius:14px; background:#f8fafc; border:1px solid #e2e8f0;">Device not connected.</div>
+        <div id="deviceStatus" class="muted device-status-box">Device not connected. Waiting for manual or automatic sync.</div>
       </div>
 
       <div class="card mt-2">
@@ -101,10 +101,20 @@
       if (confirm('Remove all saved readings for this user?')) {
         clearPersonalRecords();
         renderUserReadings();
+        updateDeviceStatus('All personal readings removed.', 'muted');
       }
     }
 
+    function updateDeviceStatus(message, className = 'muted') {
+      const statusEl = document.getElementById('deviceStatus');
+      if (!statusEl) return;
+      statusEl.textContent = message;
+      statusEl.className = `${className} device-status-box`;
+    }
+
     renderUserReadings();
+    recordDeviceReading();
+    setInterval(recordDeviceReading, 120000); // refresh every 2 minutes
   </script>
 </body>
 </html>
