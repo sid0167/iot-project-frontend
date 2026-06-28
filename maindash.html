@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
    
+    <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="maindash.css">
     <link rel="stylesheet" href="back-button.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
@@ -35,6 +36,36 @@
             </div>
         </nav>
     </header>
+
+        <!-- Dashboard Summary (frontend-only, uses data.js mock records) -->
+        <main class="dashboard container" style="padding:1.5rem 2rem;">
+            <h2 style="color:#fff; margin:0 0 1rem;">Health Dashboard</h2>
+
+            <div id="metrics" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:stretch; margin-bottom:1.25rem">
+                <!-- metric cards inserted by script -->
+            </div>
+
+            <div id="prediction" style="background:linear-gradient(90deg,#58a6ff,#2db7f5); padding:1.25rem; border-radius:12px; color:#fff; box-shadow:0 8px 30px rgba(0,0,0,0.2); margin-bottom:1.25rem;">
+                <h3 style="text-align:center; margin:0 0 0.5rem;">Health Prediction</h3>
+                <p id="prediction-text" style="text-align:center; margin:0; opacity:0.95">Loading insights from local data...</p>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1rem;">
+                <div style="background:#fff; padding:1rem; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.08)">
+                    <canvas id="chart-temp" width="400" height="220"></canvas>
+                </div>
+                <div style="background:#fff; padding:1rem; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.08)">
+                    <canvas id="chart-hr" width="400" height="220"></canvas>
+                </div>
+                <div style="background:#fff; padding:1rem; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.08)">
+                    <canvas id="chart-spo2" width="400" height="220"></canvas>
+                </div>
+            </div>
+            <div style="margin-top:1rem; background:#fff; padding:1rem; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.08)">
+                <h3 style="margin:0 0 0.5rem">BMI Trend</h3>
+                <canvas id="chart-bmi" style="width:100%; height:180px"></canvas>
+            </div>
+        </main>
 
     <section class="home" id="home">
         <div class="home-container container grid">
@@ -377,7 +408,140 @@
         <p class="footer-copy">&#169; <span>sid0167</span>. All rights reserved</p>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script src="maindash.js"></script>
+        <script src="data.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            // Frontend-only dashboard rendering using window.healthRecords (from data.js)
+            function loadRecords() {
+                const base = (window.healthRecords || []).slice();
+                const local = JSON.parse(localStorage.getItem('bmi_history_v1') || '[]').map(r => ({ date: r.date, bmi: r.bmi, temperature: r.temperature || null, heartRate: r.height ? null : r.heartRate || null, spo2: null }));
+                const combined = base.concat(local).sort((a,b) => new Date(a.date) - new Date(b.date));
+                window.dashboardRecords = combined;
+                return combined;
+            }
+
+            function latestRecord() {
+                const recs = window.dashboardRecords || loadRecords();
+                if (!recs.length) return null;
+                return recs[recs.length - 1];
+            }
+
+            function createMetricCard(title, value, unit, bg) {
+                const card = document.createElement('div');
+                card.style.flex = '1 1 280px';
+                card.style.background = bg;
+                card.style.color = '#fff';
+                card.style.borderRadius = '12px';
+                card.style.padding = '1rem 1.2rem';
+                card.style.boxShadow = '0 8px 30px rgba(0,0,0,0.12)';
+
+                card.innerHTML = `<div style="opacity:0.95; font-weight:600;">${title}</div><div style="font-size:1.6rem; font-weight:700; margin-top:0.4rem">${value} <span style="font-size:0.8rem; font-weight:600">${unit}</span></div>`;
+                return card;
+            }
+
+            function renderMetrics() {
+                const container = document.getElementById('metrics');
+                container.innerHTML = '';
+                const latest = latestRecord() || { temperature: 36.7, heartRate: 76, spo2: 97 };
+
+                container.appendChild(createMetricCard('Temperature', latest.temperature || '—', '°C', 'linear-gradient(90deg,#ff7a7a,#ff4d4d)'));
+                container.appendChild(createMetricCard('Heart Rate', latest.heartRate || '—', 'bpm', 'linear-gradient(90deg,#4da6ff,#6a5cff)'));
+                container.appendChild(createMetricCard('SpO₂', latest.spo2 || '—', '%', 'linear-gradient(90deg,#15c39a,#06b0a3)'));
+            }
+
+            function healthPrediction() {
+                if (!records.length) return 'No data available to predict. Add records from the BMI page or wait for mock data.';
+                const last = latestRecord();
+                const avgTemp = (records.reduce((s,r)=>s + (r.temperature||0),0)/records.length).toFixed(1);
+                const avgHr = Math.round(records.reduce((s,r)=>s + (r.heartRate||0),0)/records.length);
+                const avgSp = Math.round(records.reduce((s,r)=>s + (r.spo2||0),0)/records.length);
+
+                const tempStatus = last.temperature >= 37.5 ? 'Fever' : 'Normal';
+                const hrStatus = last.heartRate > 100 ? 'High' : (last.heartRate < 60 ? 'Low' : 'Normal');
+                const spStatus = last.spo2 < 95 ? 'Low' : 'Normal';
+
+                return `Temperature Status: ${tempStatus} (avg ${avgTemp} °C)\nHeart Rate Status: ${hrStatus} (avg ${avgHr} bpm)\nSpO₂ Status: ${spStatus} (avg ${avgSp} %)`;
+            }
+
+            function renderPrediction() {
+                const p = document.getElementById('prediction-text');
+                p.textContent = healthPrediction();
+            }
+
+            function buildChart(ctxId, label, color, accessor) {
+                const ctx = document.getElementById(ctxId).getContext('2d');
+                const recs = window.dashboardRecords || loadRecords();
+                const labels = recs.map(r => new Date(r.date).toLocaleDateString());
+                const data = recs.map(accessor);
+
+                return new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label,
+                            data,
+                            borderColor: color,
+                            backgroundColor: color + '33',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: false } }
+                    }
+                });
+            }
+
+            // refresh dashboard UI (metrics, prediction, charts)
+            function refreshDashboard() {
+                loadRecords();
+                renderMetrics();
+                renderPrediction();
+                // update charts if present
+                if (window.dashboardCharts) {
+                    Object.keys(window.dashboardCharts).forEach(id => {
+                        try {
+                            const chart = window.dashboardCharts[id];
+                            const recs = window.dashboardRecords || loadRecords();
+                            chart.data.labels = recs.map(r => new Date(r.date).toLocaleDateString());
+                            // detect dataset accessor by label
+                            const label = chart.data.datasets[0].label.toLowerCase();
+                            if (label.includes('temp')) chart.data.datasets[0].data = recs.map(r => r.temperature);
+                            else if (label.includes('heart') || label.includes('bpm')) chart.data.datasets[0].data = recs.map(r => r.heartRate);
+                            else if (label.includes('spo')) chart.data.datasets[0].data = recs.map(r => r.spo2);
+                            else if (label.includes('bmi')) chart.data.datasets[0].data = recs.map(r => r.bmi);
+                            chart.update();
+                        } catch (e) { console.warn('Failed updating chart', id, e); }
+                    });
+                }
+            }
+
+            // initialize dashboard
+            (function initDashboard(){
+                loadRecords();
+                renderMetrics();
+                renderPrediction();
+                window.dashboardCharts = {};
+                try {
+                    window.dashboardCharts['chart-temp'] = buildChart('chart-temp','Temperature (°C)','#ff6b6b', r=>r.temperature);
+                    window.dashboardCharts['chart-hr'] = buildChart('chart-hr','Heart Rate (bpm)','#6a5cff', r=>r.heartRate);
+                    window.dashboardCharts['chart-spo2'] = buildChart('chart-spo2','SpO₂ (%)','#19c6a8', r=>r.spo2);
+                    window.dashboardCharts['chart-bmi'] = buildChart('chart-bmi','BMI','#6a5cff', r=>r.bmi);
+                } catch (e) { console.warn('Chart init failed', e); }
+
+                // Listen for localStorage changes (synchronizes across tabs)
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'bmi_history_v1') {
+                        refreshDashboard();
+                    }
+                });
+            })();
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+        <script src="maindash.js"></script>
 </body>
 </html>
