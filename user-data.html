@@ -49,6 +49,9 @@
             <textarea id="noteInput" rows="3" placeholder="Optional note about the reading"></textarea>
           </label>
           <button class="btn secondary" type="submit">Save Reading</button>
+          <p id="manualHint" class="muted" style="margin-top:0.75rem; font-size:0.95rem;">Manual entry is disabled until the device is connected.</p>
+        </form>
+      </div>
 
       <div class="card mt-2">
         <h3>Your saved readings</h3>
@@ -113,6 +116,7 @@
     }
 
     renderUserReadings();
+    updateManualFormState();
     recordDeviceReading();
     setInterval(recordDeviceReading, 120000); // refresh every 2 minutes
   </script>

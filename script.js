@@ -82,6 +82,40 @@ function clearPersonalRecords() {
   localStorage.removeItem(getUserRecordsKey());
 }
 
+function getDeviceConnectedKey() {
+  return `user_device_connected_${getCurrentUserId()}`;
+}
+
+function setDeviceConnected(connected) {
+  localStorage.setItem(getDeviceConnectedKey(), JSON.stringify(Boolean(connected)));
+}
+
+function isDeviceConnected() {
+  return JSON.parse(localStorage.getItem(getDeviceConnectedKey()) || 'false');
+}
+
+function updateManualFormState() {
+  const connected = isDeviceConnected();
+  const form = document.querySelector('.form-grid');
+  const inputs = form ? [...form.querySelectorAll('input, textarea, button[type="submit"]')] : [];
+  inputs.forEach((el) => {
+    if (el.tagName.toLowerCase() === 'button') {
+      el.disabled = !connected;
+      el.style.opacity = connected ? '1' : '0.55';
+      el.style.cursor = connected ? 'pointer' : 'not-allowed';
+    } else {
+      el.readOnly = !connected;
+      el.style.background = connected ? '' : '#f3f4f6';
+    }
+  });
+  const hint = document.getElementById('manualHint');
+  if (hint) {
+    hint.innerText = connected
+      ? 'Device is connected. You may add a manual reading if needed.'
+      : 'Manual entry is disabled until the device is connected and data is available.';
+  }
+}
+
 async function recordDeviceReading() {
   const statusEl = document.getElementById('deviceStatus');
   const token = localStorage.getItem('token');
@@ -113,11 +147,16 @@ async function recordDeviceReading() {
       date: new Date().toISOString()
     });
 
+    setDeviceConnected(true);
+    updateManualFormState();
+
     if (statusEl) {
-      statusEl.innerText = 'Device data recorded successfully.';
+      statusEl.innerText = 'Device data recorded successfully. Manual entry is now enabled.';
       statusEl.className = 'success-status';
     }
   } catch (error) {
+    setDeviceConnected(false);
+    updateManualFormState();
     if (statusEl) {
       statusEl.innerText = 'Device sync failed. Please check your connection.';
       statusEl.className = 'error-status';
