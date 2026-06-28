@@ -17,12 +17,29 @@
 </head>
 <body>
   <a class="back-button" href="dashboard.html">Back</a>
-  <main style="max-width:900px;margin:3rem auto;padding:1rem">
-    <h1 style="font-family:Montserrat,Inter,sans-serif; margin-bottom:0.5rem">Compare Results</h1>
-    <p style="color:#555;margin-bottom:1rem">Use the Compare panel (top-right) to inspect and compare health records.</p>
-    <section id="compare-area">
-      <!-- compare.js injects a small panel and handles comparisons -->
+  <main style="max-width:1000px;margin:2rem auto;padding:1.5rem;">
+    <!-- Header Section -->
+    <div style="margin-bottom:2.5rem;">
+      <h1 style="font-family:Montserrat,Inter,sans-serif; margin-bottom:0.5rem; font-size:2.2rem; color:#2d3436;">📊 Compare Health Records</h1>
+      <p style="color:#666; margin:0; font-size:15px; line-height:1.6;">Track changes in your health metrics over time. View the difference between your latest records and see how your health indicators are progressing.</p>
+    </div>
+
+    <!-- Main Comparison Section -->
+    <section id="compare-area" style="margin-bottom:3rem;">
+      <p style="text-align:center; color:#95a5a6; padding:2rem; font-size:14px;">Loading your health records...</p>
     </section>
+
+    <!-- Side Panel Info Box -->
+    <div style="background: linear-gradient(135deg, rgba(255, 195, 113, 0.1) 0%, rgba(255, 152, 0, 0.05) 100%); border: 1px solid rgba(255, 152, 0, 0.2); border-radius:14px; padding:1.5rem; margin-top:2rem;">
+      <h3 style="margin:0 0 1rem 0; color:#2d3436; font-weight:700;">💡 How to Compare</h3>
+      <p style="margin:0.5rem 0; color:#555; font-size:14px; line-height:1.6;">
+        <strong>Use the Health Records panel</strong> in the top-right corner to select and compare specific health measurements. The differences are color-coded:
+      </p>
+      <ul style="margin:0.8rem 0; padding-left:20px; color:#555; font-size:14px; line-height:1.8;">
+        <li><span style="color:#16a34a; font-weight:700;">Green ↓</span> = Positive improvement</li>
+        <li><span style="color:#dc2626; font-weight:700;">Red ↑</span> = Needs attention</li>
+      </ul>
+    </div>
   </main>
   
   

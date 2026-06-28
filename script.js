@@ -1,4 +1,86 @@
-const API_BASE = "https://iot-project-25ym.onrender.com"; // e.g. https://iot-health.onrender.com
+const API_BASE = "https://iot-project-25ym.onrender.com";
+
+function readStoredArray(key, fallback = []) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : fallback;
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function getCurrentUserId() {
+  const user = (localStorage.getItem("currentUser") || "guest").toString().trim();
+  return user.toLowerCase().replace(/[^a-z0-9]+/g, "_") || "guest";
+}
+
+function getCurrentUserName() {
+  return localStorage.getItem("currentUser") || "Guest";
+}
+
+function getUserRecordsKey() {
+  return `user_health_records_${getCurrentUserId()}`;
+}
+
+function getGeneralRecords() {
+  const fallback = (typeof window !== "undefined" && Array.isArray(window.healthRecords)) ? window.healthRecords : [];
+  const stored = readStoredArray("general_health_records", fallback);
+  const source = stored.length ? stored : fallback;
+
+  if (!stored.length && fallback.length) {
+    localStorage.setItem("general_health_records", JSON.stringify(fallback));
+  }
+
+  return source
+    .map((record) => ({
+      date: record.date || record.timestamp || new Date().toISOString(),
+      temperature: Number(record.temperature) || 0,
+      heartRate: Number(record.heartRate) || 0,
+      spo2: Number(record.spo2) || 0,
+      bmi: record.bmi != null ? Number(record.bmi) : null,
+      source: "general"
+    }))
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+
+function getPersonalRecords() {
+  return readStoredArray(getUserRecordsKey(), [])
+    .map((record) => ({
+      id: record.id || Date.now(),
+      date: record.date || record.timestamp || new Date().toISOString(),
+      temperature: Number(record.temperature) || 0,
+      heartRate: Number(record.heartRate) || 0,
+      spo2: Number(record.spo2) || 0,
+      bmi: record.bmi != null ? Number(record.bmi) : null,
+      note: record.note || "",
+      source: "personal"
+    }))
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+
+function savePersonalRecord(record) {
+  const entry = {
+    id: Date.now(),
+    date: record.date || new Date().toISOString(),
+    temperature: Number(record.temperature) || 0,
+    heartRate: Number(record.heartRate) || 0,
+    spo2: Number(record.spo2) || 0,
+    bmi: record.bmi != null ? Number(record.bmi) : null,
+    note: record.note || "",
+    source: "personal"
+  };
+
+  const existing = readStoredArray(getUserRecordsKey(), []);
+  const updated = [...existing, entry].sort((a, b) => new Date(a.date) - new Date(b.date));
+  localStorage.setItem(getUserRecordsKey(), JSON.stringify(updated));
+  return entry;
+}
+
+function clearPersonalRecords() {
+  localStorage.removeItem(getUserRecordsKey());
+}
 
 async function login() {
   const email = document.getElementById("email").value;
@@ -14,6 +96,7 @@ async function login() {
 
   if (data.token) {
     localStorage.setItem("token", data.token);
+    localStorage.setItem("currentUser", email);
     window.location.href = "dashboard.html";
   } else {
     document.getElementById("msg").textContent = "Login failed";
@@ -35,5 +118,6 @@ async function fetchHealthData() {
 
 function logout() {
   localStorage.removeItem("token");
+  localStorage.removeItem("currentUser");
   window.location.href = "login2.html";
 }
