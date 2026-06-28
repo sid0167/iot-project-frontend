@@ -31,6 +31,9 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);-webkit
 
 .muted{color:var(--muted)}
 
+.success-status{color:#047857;background:#dcfce7;border:1px solid #86efac;border-radius:12px;padding:0.75rem}
+.error-status{color:#b91c1c;background:#fee2e2;border:1px solid #fecaca;border-radius:12px;padding:0.75rem}
+
 .grid{display:grid;gap:var(--gap)}
 
 /* Utility spacing helpers */

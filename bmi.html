@@ -8,139 +8,329 @@
   <link rel="stylesheet" href="back-button.css">
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #74b9ff, #0984e3);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
       margin: 0;
-      padding: 1rem;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, rgba(255,255,255,0.96), transparent 30%), linear-gradient(180deg, #edf2ff 0%, #dbeafe 45%, #f8fafc 100%);
+      color: #0f172a;
+    }
+
+    .bmi-page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 2rem 1rem 3rem;
+      position: relative;
+    }
+
+    .back-button {
+      position: absolute;
+      right: 1rem;
+      top: 1rem;
+      z-index: 2;
+      text-decoration: none;
+      padding: 0.95rem 1.25rem;
+      border-radius: 16px;
+      background: #ef4444;
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 18px 40px rgba(239, 68, 68, 0.22);
+    }
+
+    .bmi-grid {
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) minmax(420px, 1fr);
+      gap: 2rem;
+      align-items: start;
+      margin-top: 2.5rem;
     }
 
     .card {
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 20px;
+      background: #ffffff;
+      border-radius: 28px;
       padding: 2rem;
-      max-width: 420px;
-      width: 100%;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-      animation: fadeIn 0.8s ease-in-out;
+      box-shadow: 0 32px 70px rgba(15, 23, 42, 0.12);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .badge {
+      width: 56px;
+      height: 56px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #4f7fff, #10b981);
+      color: #fff;
+      font-size: 1.6rem;
+      box-shadow: 0 18px 36px rgba(79, 127, 255, 0.18);
     }
 
     h1 {
-      text-align: center;
-      color: #2d3436;
-      margin-bottom: 1.5rem;
+      margin: 0;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+    }
+
+    h2, h3 {
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .panel-copy,
+    .muted {
+      margin: 0.8rem 0 0;
+      color: #64748b;
+      line-height: 1.75;
     }
 
     .form-group {
-      margin-bottom: 1.2rem;
+      margin-bottom: 1.3rem;
     }
 
     label {
       display: block;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-      color: #2d3436;
+      margin-bottom: 0.55rem;
+      color: #0f172a;
+      font-weight: 700;
     }
 
     input {
       width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #ccc;
-      border-radius: 10px;
+      padding: 1rem 1.1rem;
+      border-radius: 16px;
+      border: 1px solid #cbd5e1;
       font-size: 1rem;
-      transition: 0.3s;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
     input:focus {
-      border-color: #0984e3;
-      box-shadow: 0 0 6px rgba(9,132,227,0.5);
       outline: none;
+      border-color: #4f7fff;
+      box-shadow: 0 0 0 5px rgba(79, 127, 255, 0.14);
     }
 
-    button {
-      width: 100%;
-      padding: 0.9rem;
-      background: linear-gradient(135deg, #00cec9, #0984e3);
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 160px;
+      padding: 0.95rem 1.4rem;
+      border-radius: 999px;
       border: none;
-      color: white;
-      font-size: 1.1rem;
-      font-weight: bold;
-      border-radius: 12px;
       cursor: pointer;
-      transition: 0.3s;
+      font-weight: 700;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     }
 
-    button:hover {
-      transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    .btn:hover {
+      transform: translateY(-2px);
     }
 
-    #result {
+    .btn.secondary {
+      background: linear-gradient(135deg, #10b981, #4f7fff);
+      color: white;
+      box-shadow: 0 18px 35px rgba(16, 185, 129, 0.18);
+    }
+
+    .btn.danger {
+      background: #ef4444;
+      color: white;
+      box-shadow: 0 18px 35px rgba(239, 68, 68, 0.18);
+    }
+
+    .result-box {
       margin-top: 1.5rem;
-      text-align: center;
-      font-weight: bold;
-      font-size: 1.2rem;
-      color: #2d3436;
-      padding: 1rem;
-      border-radius: 12px;
+      padding: 1.2rem 1.25rem;
+      border-radius: 18px;
       display: none;
-      animation: fadeIn 0.6s ease-in-out;
+      font-weight: 700;
+      font-size: 1rem;
     }
 
-    /* Result category colors */
-    .underweight { background: #ffeaa7; color: #d35400; }
-    .normal { background: #55efc4; color: #2d3436; }
-    .overweight { background: #fab1a0; color: #c0392b; }
-    .obese { background: #ff7675; color: white; }
+    .underweight { background: #fef3c7; color: #92400e; }
+    .normal { background: #dcfce7; color: #166534; }
+    .overweight { background: #fee2e2; color: #991b1b; }
+    .obese { background: #fed7e2; color: #831843; }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .history-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      width: 100%;
+    }
+
+    .history-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    .history-item {
+      background: #f8fafc;
+      border-radius: 20px;
+      padding: 1.1rem 1.15rem;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
+    }
+
+    .history-item time {
+      display: block;
+      margin-bottom: 0.7rem;
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+
+    .history-item strong {
+      display: block;
+      font-size: 1.05rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .history-item .item-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      color: #475569;
+      font-size: 0.95rem;
+    }
+
+    .chart-card {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 1.15rem;
+      min-height: 240px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
+    }
+
+    .tips-box {
+      background: #f8fafc;
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      padding: 1.5rem;
+    }
+
+    .tips-box h3 {
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+
+    .tips-box ul {
+      margin: 0;
+      padding-left: 1.2rem;
+      color: #475569;
+      line-height: 1.8;
+    }
+
+    .export-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .chart-card canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    @media (max-width: 980px) {
+      .bmi-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .back-button {
+        position: relative;
+        display: inline-flex;
+        margin-bottom: 1rem;
+      }
     }
   </style>
 </head>
 <body>
-  <a class="back-button" href="dashboard.html">Back</a>
-  <div class="card">
-    <h1>💪 BMI Calculator</h1>
-    <div class="form-group">
-      <label for="height">Height (in cm)</label>
-      <input type="number" id="height" placeholder="e.g. 170" required />
-    </div>
-    <div class="form-group">
-      <label for="weight">Weight (in kg)</label>
-      <input type="number" id="weight" placeholder="e.g. 65" required />
-    </div>
-    <button onclick="submitBMI()">Submit & Calculate BMI</button>
-    <div id="result"></div>
-  </div>
+  <div class="bmi-page">
+    <a class="back-button" href="dashboard.html">Back</a>
 
-  <div class="card" style="max-width:920px; margin-top:1.25rem;">
-    <h2 style="text-align:center; margin-top:0;">📊 Your BMI History</h2>
-    <div style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center;">
-      <div id="history-list" style="flex:1 1 360px; min-width:260px;">
-        <canvas id="bmi-trend" style="width:100%; height:170px; margin-bottom:0.6rem; display:block"></canvas>
-        <div style="display:flex; gap:0.5rem;">
-          <button id="export-csv" style="flex:1; background:#0984e3; color:#fff; border-radius:8px; padding:0.55rem;">Export CSV</button>
-          <button id="download-json" style="flex:1; background:#6a5cff; color:#fff; border-radius:8px; padding:0.55rem;">Download JSON</button>
+    <div class="bmi-grid">
+      <section class="card">
+        <div class="panel-head">
+          <span class="badge">💪</span>
+          <div>
+            <h1>BMI Calculator</h1>
+            <p class="panel-copy">Enter your height and weight to calculate BMI and keep an easy record of your health progress.</p>
+          </div>
         </div>
-      </div>
-      <div style="flex:1 1 360px; min-width:260px;">
-        <h3 style="margin-bottom:0.5rem">Health Tips</h3>
-        <ul style="line-height:1.6; margin-top:0.4rem">
-          <li>Maintain a balanced diet rich in vegetables, lean protein and whole grains.</li>
-          <li>Exercise at least 30 minutes daily—mix cardio and strength training.</li>
-          <li>Stay hydrated and sleep 7–9 hours for better recovery and metabolism.</li>
-          <li>Track progress rather than perfection — small, consistent changes win.</li>
-        </ul>
-        <div style="margin-top:1rem; display:flex; gap:0.5rem;">
-          <button id="clear-history" style="flex:1; background:#ff7675;">Clear History</button>
-          <a href="maindash.html" class="button" style="flex:1; text-align:center; display:inline-block; padding:0.65rem; border-radius:10px; text-decoration:none; color:white; background:#0984e3">Open Dashboard</a>
+
+        <div class="form-group">
+          <label for="height">Height (in cm)</label>
+          <input type="number" id="height" placeholder="e.g. 170" required />
         </div>
-      </div>
+        <div class="form-group">
+          <label for="weight">Weight (in kg)</label>
+          <input type="number" id="weight" placeholder="e.g. 65" required />
+        </div>
+        <button class="btn secondary" onclick="submitBMI()">Submit & Calculate BMI</button>
+        <div id="result" class="result-box"></div>
+      </section>
+
+      <section class="card">
+        <div class="history-header">
+          <div>
+            <h2>📊 Your BMI History</h2>
+            <p class="muted">Your latest BMI readings are saved locally so you can quickly review recent progress.</p>
+          </div>
+          <div class="history-actions">
+            <button class="btn danger" id="clear-history">Clear History</button>
+            <a class="btn" href="maindash.html">Open Dashboard</a>
+          </div>
+        </div>
+
+        <div class="history-body">
+          <div class="history-list" id="bmi-history-list"></div>
+          <div class="chart-card">
+            <canvas id="bmi-trend"></canvas>
+          </div>
+        </div>
+
+        <div class="tips-box">
+          <h3>Health Tips</h3>
+          <ul>
+            <li>Maintain a balanced diet rich in vegetables, lean protein, and whole grains.</li>
+            <li>Exercise at least 30 minutes daily—mix cardio and strength training.</li>
+            <li>Stay hydrated and sleep 7–9 hours for better recovery and metabolism.</li>
+            <li>Track progress rather than perfection—small consistent changes win.</li>
+          </ul>
+        </div>
+
+        <div class="export-actions">
+          <button class="btn secondary" id="export-csv">Export CSV</button>
+          <button class="btn" id="download-json">Download JSON</button>
+        </div>
+      </section>
     </div>
   </div>
 

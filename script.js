@@ -82,6 +82,50 @@ function clearPersonalRecords() {
   localStorage.removeItem(getUserRecordsKey());
 }
 
+async function recordDeviceReading() {
+  const statusEl = document.getElementById('deviceStatus');
+  const token = localStorage.getItem('token');
+  if (!token) {
+    if (statusEl) statusEl.innerText = 'No device token available. Please login again.';
+    return;
+  }
+
+  if (statusEl) {
+    statusEl.innerText = 'Connecting to device...';
+    statusEl.className = 'muted';
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/health/latest`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || data.temperature == null || data.heartRate == null || data.spo2 == null) {
+      throw new Error(data.message || 'Device data unavailable');
+    }
+
+    savePersonalRecord({
+      temperature: data.temperature,
+      heartRate: data.heartRate,
+      spo2: data.spo2,
+      note: 'Automatic device sync',
+      date: new Date().toISOString()
+    });
+
+    if (statusEl) {
+      statusEl.innerText = 'Device data recorded successfully.';
+      statusEl.className = 'success-status';
+    }
+  } catch (error) {
+    if (statusEl) {
+      statusEl.innerText = 'Device sync failed. Please check your connection.';
+      statusEl.className = 'error-status';
+    }
+    console.warn('Device sync failed', error);
+  }
+}
+
 async function login() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
