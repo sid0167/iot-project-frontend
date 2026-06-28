@@ -278,6 +278,17 @@ body {
   background: rgba(220, 38, 38, 0.08);
 }
 
+.data-badge {
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:12px;
+  font-weight:700;
+  color:#fff;
+  font-size:0.85rem;
+}
+.data-badge.personal { background: linear-gradient(90deg,#10b981,#059669); }
+.data-badge.mock { background: linear-gradient(90deg,#6b7280,#4b5563); }
+
 .metric-values > div:last-child {
   padding-left: 12px;
 }

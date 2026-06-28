@@ -305,6 +305,7 @@
           </div>
           <div class="history-actions">
             <button class="btn danger" id="clear-history">Clear History</button>
+            <button class="btn" id="import-to-personal">Import History to My Records</button>
             <a class="btn" href="dashboard.html">Open Dashboard</a>
           </div>
         </div>
@@ -334,6 +335,7 @@
     </div>
   </div>
 
+  <script src="script.js"></script>
   <script>
     function calculateLocalBMI(height, weight) {
       const h = height / 100;
@@ -496,6 +498,24 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url; a.download = 'bmi_history.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+
+    // Import BMI history into current user's personal records
+    document.getElementById('import-to-personal').addEventListener('click', () => {
+      try {
+        const key = 'bmi_history_v1';
+        const list = JSON.parse(localStorage.getItem(key) || '[]');
+        if (!list.length) return alert('No BMI history to import');
+        if (typeof getUserRecordsKey !== 'function') return alert('App helper not available');
+        const targetKey = getUserRecordsKey();
+        const existing = JSON.parse(localStorage.getItem(targetKey) || '[]');
+        const mapped = list.map(r => ({ date: r.date || new Date().toISOString(), temperature: r.temperature || null, heartRate: r.heartRate || null, spo2: r.spo2 || null, bmi: r.bmi != null ? Number(r.bmi) : null, note: 'Imported from BMI history' }));
+        const merged = [...existing, ...mapped].sort((a,b)=>new Date(a.date)-new Date(b.date));
+        localStorage.setItem(targetKey, JSON.stringify(merged));
+        // notify other pages
+        try { window.dispatchEvent(new StorageEvent('storage', { key: targetKey, newValue: JSON.stringify(merged) })); } catch(e){}
+        alert('Imported BMI history to your personal records');
+      } catch (err) { console.warn(err); alert('Import failed'); }
     });
   </script>
 </body>

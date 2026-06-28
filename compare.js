@@ -79,25 +79,35 @@ if (ball && typeof gsap !== 'undefined' && typeof Draggable !== 'undefined' && t
 (function () {
   if (typeof window === 'undefined') return;
 
+  function updateBadge(usePersonal) {
+    const el = document.getElementById('dataSourceBadge');
+    if (!el) return;
+    el.className = usePersonal ? 'data-badge personal' : 'data-badge mock';
+    el.textContent = usePersonal ? 'Using personal data' : 'Using mock data';
+  }
+
   function getSourceRecords() {
     // Prefer current user's personal records when available
     try {
       if (typeof getPersonalRecords === 'function') {
         const personal = getPersonalRecords();
-        if (Array.isArray(personal) && personal.length) return personal.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+        if (Array.isArray(personal) && personal.length) return { records: personal.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)), isPersonal: true };
       }
     } catch (e) { /* ignore */ }
 
     // Fallback to global mock records
     if (Array.isArray(window.healthRecords) && window.healthRecords.length) {
-      return window.healthRecords.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+      return { records: window.healthRecords.slice().sort((a, b) => new Date(b.date) - new Date(a.date)), isPersonal: false };
     }
 
-    return [];
+    return { records: [], isPersonal: false };
   }
 
   function initPanel() {
-    const records = getSourceRecords();
+    const src = getSourceRecords();
+    const records = src.records;
+    updateBadge(src.isPersonal);
+
 
     const panel = document.createElement('div');
     panel.style.position = 'fixed';
@@ -267,7 +277,12 @@ if (ball && typeof gsap !== 'undefined' && typeof Draggable !== 'undefined' && t
   function renderComparison() {
     const target = document.getElementById('compare-area');
     if (!target) return;
-    const records = window.healthRecords.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+    const records = (function(){
+      try { if (typeof getPersonalRecords === 'function') { const p = getPersonalRecords(); if (Array.isArray(p) && p.length) return p.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)); } } catch(e){}
+      return Array.isArray(window.healthRecords) ? window.healthRecords.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)) : [];
+    })();
+    // update badge (if present)
+    try { const el = document.getElementById('dataSourceBadge'); if (el) { const isPersonal = (typeof getPersonalRecords === 'function' && Array.isArray(getPersonalRecords()) && getPersonalRecords().length); el.className = isPersonal ? 'data-badge personal' : 'data-badge mock'; el.textContent = isPersonal ? 'Using personal data' : 'Using mock data'; } } catch(e){}
     if (records.length < 2) {
       target.innerHTML = '<p style="color:#666">Not enough records to compare.</p>';
       return;
